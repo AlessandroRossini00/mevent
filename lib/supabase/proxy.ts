@@ -50,7 +50,6 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
 
-  // Serve per proteggere le pagine/route private
   const pathname = request.nextUrl.pathname;
 
   const isPublicPath =
@@ -61,6 +60,14 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/_next") ||
     pathname === "/favicon.ico";
 
+  // redirect su explore se loggato
+  if (pathname === "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = user ? "/explore" : "/login";
+    return NextResponse.redirect(url);
+  }
+
+  // Serve per proteggere le pagine/route private
   if (!user && !isPublicPath) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone();

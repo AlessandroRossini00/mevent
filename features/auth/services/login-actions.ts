@@ -10,6 +10,7 @@ import { getPostAuthRedirect } from "./redirect-after-auth";
 const REDIRECT_AFTER_LOGIN = "/explore";
 const CALLBACK_PATH = "/api/auth/callback";
 
+// TODO credo modificare _prevState che credo sia inutile
 export async function login(
   _prevState: AuthActionState,
   formData: FormData,
