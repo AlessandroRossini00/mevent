@@ -10,26 +10,26 @@ import {
   Separator,
   Box,
   Badge,
+  Heading,
+  Text,
 } from "@radix-ui/themes";
 
-export default function HomePage() {
+import ExploreEventsList from "@/features/explore/components/explore-events-list";
+
+export default function ExplorePage() {
   return (
-    <Flex
-      gap={"3"}
-      direction={"column"}
-      justify={"center"}
-      align={"center"}
-      className="bg-amber-400"
-    >
-      <SearchFiltersBar />
-      <Box width="64px" height="64px" className="bg-red-600">
-        <h1>Home</h1>
-      </Box>
-      <h1>Home</h1>
-      <Link href="/explore/filters">Vai a Details (push nello stack Home)</Link>
-      <Button size="4">BUTTON</Button>
-      <Badge className={"p-0"}>Ciao</Badge>
-    </Flex>
+    <Box p="4">
+      <Flex direction="column" gap="4">
+        <Box>
+          <Heading size="6">Explore</Heading>
+          <Text color="gray">
+            Scopri nuovi eventi e scegli a quali partecipare.
+          </Text>
+        </Box>
+
+        <ExploreEventsList />
+      </Flex>
+    </Box>
   );
 }
 

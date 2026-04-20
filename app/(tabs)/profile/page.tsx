@@ -1,59 +1,70 @@
-// app/(tabs)/home/page.tsx
 "use client";
-import Link from "next/link";
-import { List } from "@/components/ui/List";
-import { Button, Card, Box, Flex, Text, Avatar } from "@radix-ui/themes";
-import { logout } from "@/features/auth/services/login-actions";
 
-import { useAuth } from "@/features/auth/hook/use-auth";
+import { Box, Flex, Heading, Spinner, Text } from "@radix-ui/themes";
+import CreatedEventsList from "@/features/profile/components/created-events-list";
+import EditProfileForm from "@/features/profile/components/edit-profile-form";
+import ProfileHeader from "@/features/profile/components/profile-header";
+import ProfileInfoCard from "@/features/profile/components/profile-info-card";
+import { useProfile } from "@/features/profile/hooks/use-profile";
 
-export default function ExplorePage() {
-  const { user, profile, isHydrated } = useAuth();
+export default function ProfilePage() {
+  const { profile, isLoading, error } = useProfile();
+
+  if (isLoading) {
+    return (
+      <Flex minHeight="60vh" align="center" justify="center">
+        <Spinner size="3" />
+      </Flex>
+    );
+  }
+
+  if (error || !profile) {
+    return (
+      <Box p="4">
+        <Text color="red">{error ?? "Profilo non disponibile."}</Text>
+      </Box>
+    );
+  }
 
   return (
-    <div>
-      <h1>PROFILE</h1>
-      <List
-        orientation="horizontal"
-        items={["Music", "Sport", "Tech", "Food"]}
-        renderItem={(label) => (
-          <button className="rounded-full border px-4 py-2 whitespace-nowrap">
-            {label}
-          </button>
-        )}
-      />
-      <Box maxWidth="240px">
-        <Card>
-          <Flex
-            gap="3"
-            align="center"
-            direction={"column"}
-            style={{ backgroundColor: "red" }}
-          >
-            <Avatar
-              size="3"
-              src="https://images.unsplash.com/photo-1607346256330-dee7af15f7c5?&w=64&h=64&dpr=2&q=70&crop=focalpoint&fp-x=0.67&fp-y=0.5&fp-z=1.4&fit=crop"
-              radius="full"
-              fallback="T"
-            />
-            <Box>
-              <Text as="div" size="2" weight="bold">
-                {profile?.full_name}
-              </Text>
-              <Text
-                as="div"
-                size="2"
-                color="gray"
-                style={{ backgroundColor: "orange" }}
-              >
-                {user?.email}
-              </Text>
-            </Box>
-          </Flex>
-        </Card>
-      </Box>
+    <Box p="4">
+      <Flex direction="column" gap="5">
+        <Box>
+          <Heading size="6">Profile</Heading>
+          <Text color="gray">
+            Gestisci il tuo profilo e i tuoi eventi creati.
+          </Text>
+        </Box>
 
-      <Button onClick={() => logout()}>Logout</Button>
-    </div>
+        <ProfileHeader profile={profile} />
+
+        <Flex
+          direction={{ initial: "column", xl: "row" }}
+          gap="4"
+          align="start"
+        >
+          <div className="w-full xl:max-w-[420px]">
+            <Flex direction="column" gap="4">
+              <ProfileInfoCard profile={profile} />
+              <EditProfileForm profile={profile} />
+            </Flex>
+          </div>
+
+          <div className="w-full">
+            <Flex direction="column" gap="3">
+              <Box>
+                <Heading size="5">Eventi creati</Heading>
+                <Text color="gray">
+                  Qui trovi gli eventi che hai pubblicato e il punto per crearne
+                  uno nuovo.
+                </Text>
+              </Box>
+
+              <CreatedEventsList />
+            </Flex>
+          </div>
+        </Flex>
+      </Flex>
+    </Box>
   );
 }
