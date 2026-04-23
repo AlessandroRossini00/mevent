@@ -28,35 +28,31 @@ export default function ProfilePage() {
 
   return (
     <Box p="4">
-      <Flex direction="column" gap="5">
+      <Flex direction="column" gap="5" style={{ backgroundColor: "yellow" }}>
         <Box>
           <Heading size="6">Profile</Heading>
-          <Text color="gray">
-            Gestisci il tuo profilo e i tuoi eventi creati.
-          </Text>
+          <Text color="gray">Gestisci il tuo profilo</Text>
         </Box>
 
         <ProfileHeader profile={profile} />
 
-        <Flex
-          direction={{ initial: "column", xl: "row" }}
-          gap="4"
-          align="start"
-        >
-          <div className="w-full xl:max-w-[420px]">
-            <Flex direction="column" gap="4">
-              <ProfileInfoCard profile={profile} />
-              <EditProfileForm profile={profile} />
-            </Flex>
-          </div>
+        <Flex direction={{ initial: "column" }} gap="4" align={"center"}>
+          <Flex
+            direction="column"
+            gap="4"
+            minWidth={{ md: "200px", initial: "100px" }}
+            maxWidth={{ md: "600px", initial: "100%" }}
+          >
+            <ProfileInfoCard profile={profile} />
+            <EditProfileForm profile={profile} />
+          </Flex>
 
           <div className="w-full">
             <Flex direction="column" gap="3">
               <Box>
-                <Heading size="5">Eventi creati</Heading>
+                <Heading size="5">Eventi</Heading>
                 <Text color="gray">
-                  Qui trovi gli eventi che hai pubblicato e il punto per crearne
-                  uno nuovo.
+                  Gestisci gli eventi che hai creato o creane dei nuovi.
                 </Text>
               </Box>
 

@@ -5,7 +5,6 @@ import {
   Button,
   Card,
   Flex,
-  Select,
   Text,
   TextArea,
   TextField,
@@ -76,46 +75,60 @@ export default function CreateEventForm() {
             <TextField.Root name="address" />
           </div>
 
+          <Flex gap="3">
+            <div className="flex-1">
+              <Text as="label" size="2" weight="medium">
+                Latitudine
+              </Text>
+              <TextField.Root
+                name="latitude"
+                type="number"
+                step="0.0000001"
+                placeholder="45.4642"
+              />
+            </div>
+
+            <div className="flex-1">
+              <Text as="label" size="2" weight="medium">
+                Longitudine
+              </Text>
+              <TextField.Root
+                name="longitude"
+                type="number"
+                step="0.0000001"
+                placeholder="9.1900"
+              />
+            </div>
+          </Flex>
+
+          <Flex gap="3">
+            <div className="flex-1">
+              <Text as="label" size="2" weight="medium">
+                Prezzo
+              </Text>
+              <TextField.Root name="price" type="number" min="0" step="0.01" />
+            </div>
+
+            <div className="flex-1">
+              <Text as="label" size="2" weight="medium">
+                Max membri
+              </Text>
+              <TextField.Root name="max_members" type="number" min="1" />
+            </div>
+          </Flex>
+
           <div>
             <Text as="label" size="2" weight="medium">
-              Prezzo
+              Sito web
             </Text>
-            <TextField.Root name="price" type="number" min="0" step="0.01" />
+            <TextField.Root name="website_url" placeholder="https://..." />
           </div>
 
           <div>
             <Text as="label" size="2" weight="medium">
-              Max membri
+              Link Maps
             </Text>
-            <TextField.Root name="max_members" type="number" min="1" />
-          </div>
-
-          <div>
-            <Text as="label" size="2" weight="medium">
-              Visibilità
-            </Text>
-            <Select.Root name="visibility" defaultValue="public">
-              <Select.Trigger />
-              <Select.Content>
-                <Select.Item value="public">Pubblico</Select.Item>
-                <Select.Item value="private">Privato</Select.Item>
-              </Select.Content>
-            </Select.Root>
-          </div>
-
-          <div>
-            <Text as="label" size="2" weight="medium">
-              Accesso
-            </Text>
-            <Select.Root name="approval_mode" defaultValue="open">
-              <Select.Trigger />
-              <Select.Content>
-                <Select.Item value="open">Ingresso libero</Select.Item>
-                <Select.Item value="approval_required">
-                  Richiede approvazione
-                </Select.Item>
-              </Select.Content>
-            </Select.Root>
+            <TextField.Root name="maps_url" placeholder="https://maps..." />
           </div>
 
           {error ? <Text color="red">{error}</Text> : null}

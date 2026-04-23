@@ -1,7 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useTransition } from "react";
 import {
+  Avatar,
   Button,
   Card,
   Flex,
@@ -20,6 +22,9 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
   const { updateProfile, actionError } = useProfileActions();
   const [isPending, startTransition] = useTransition();
   const [localError, setLocalError] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(
+    profile.avatar_url ?? null,
+  );
 
   const handleSubmit = (formData: FormData) => {
     setLocalError(null);
@@ -42,6 +47,43 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
           <Text size="3" weight="medium">
             Modifica profilo
           </Text>
+
+          <Flex direction="column" gap="3" align="start">
+            <Text size="2" weight="medium">
+              Foto profilo
+            </Text>
+
+            {previewUrl ? (
+              <div className="relative h-24 w-24 overflow-hidden rounded-full">
+                <Image
+                  src={previewUrl}
+                  alt={profile.full_name}
+                  fill
+                  className="object-cover"
+                  sizes="96px"
+                />
+              </div>
+            ) : (
+              <Avatar
+                fallback={profile.full_name.slice(0, 2).toUpperCase()}
+                size="6"
+                radius="full"
+              />
+            )}
+
+            <input
+              name="avatar"
+              type="file"
+              accept="image/*"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+
+                const objectUrl = URL.createObjectURL(file);
+                setPreviewUrl(objectUrl);
+              }}
+            />
+          </Flex>
 
           <div>
             <Text as="label" size="2" weight="medium">

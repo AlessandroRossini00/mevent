@@ -8,6 +8,14 @@ function toNullable(value: FormDataEntryValue | null) {
   return text || null;
 }
 
+function toNullableNumber(value: FormDataEntryValue | null) {
+  const text = String(value ?? "").trim();
+  if (!text) return null;
+
+  const num = Number(text);
+  return Number.isNaN(num) ? null : num;
+}
+
 export async function createEventAction(formData: FormData) {
   const supabase = await createClient();
 
@@ -45,8 +53,6 @@ export async function createEventAction(formData: FormData) {
       max_members: formData.get("max_members")
         ? Number(formData.get("max_members"))
         : null,
-      visibility: String(formData.get("visibility") ?? "public"),
-      approval_mode: String(formData.get("approval_mode") ?? "open"),
       status: "active",
     })
     .select("id")
@@ -78,30 +84,7 @@ export async function joinEventAction(eventId: string) {
 
   if (!user) redirect("/login");
 
-  const { data: event, error: eventError } = await supabase
-    .from("events")
-    .select("approval_mode")
-    .eq("id", eventId)
-    .single();
-
-  if (eventError) throw eventError;
-
-  if (event.approval_mode === "approval_required") {
-    const { error } = await supabase.from("event_join_requests").upsert(
-      {
-        event_id: eventId,
-        user_id: user.id,
-        status: "pending",
-      },
-      { onConflict: "event_id,user_id" },
-    );
-
-    if (error) throw error;
-
-    return { type: "request_sent" as const };
-  }
-
-  const { error } = await supabase.from("event_members").upsert(
+  const { error: joinError } = await supabase.from("event_members").upsert(
     {
       event_id: eventId,
       user_id: user.id,
@@ -110,9 +93,44 @@ export async function joinEventAction(eventId: string) {
     { onConflict: "event_id,user_id" },
   );
 
-  if (error) throw error;
+  if (joinError) throw joinError;
 
-  return { type: "joined" as const };
+  const { data: joinedEvent, error: joinedEventError } = await supabase
+    .from("events")
+    .select(
+      `
+      *,
+      event_images (*),
+      event_members (
+        event_id,
+        user_id,
+        role,
+        joined_at,
+        profile:user_id (
+          id,
+          username,
+          full_name,
+          birth_date,
+          avatar_url,
+          bio,
+          city
+        )
+      )
+    `,
+    )
+    .eq("id", eventId)
+    .maybeSingle();
+
+  if (joinedEventError) throw joinedEventError;
+
+  if (!joinedEvent) {
+    throw new Error("Evento non trovato.");
+  }
+
+  return {
+    type: "joined" as const,
+    event: joinedEvent,
+  };
 }
 
 export async function leaveJoinedEventAction(eventId: string) {
@@ -179,4 +197,103 @@ export async function deleteEventAction(eventId: string) {
   if (error) throw error;
 
   return { success: true };
+}
+
+export async function updateEventAction(eventId: string, formData: FormData) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect("/login");
+
+  const title = String(formData.get("title") ?? "").trim();
+  const description = toNullable(formData.get("description"));
+  const category = toNullable(formData.get("category"));
+  const eventAt = String(formData.get("event_at") ?? "").trim();
+  const locationName = toNullable(formData.get("location_name"));
+  const address = toNullable(formData.get("address"));
+  const latitude = toNullableNumber(formData.get("latitude"));
+  const longitude = toNullableNumber(formData.get("longitude"));
+  const price = toNullableNumber(formData.get("price")) ?? 0;
+  const maxMembers = toNullableNumber(formData.get("max_members"));
+  const websiteUrl = toNullable(formData.get("website_url"));
+  const mapsUrl = toNullable(formData.get("maps_url"));
+
+  if (!title) {
+    throw new Error("Il titolo e obbligatorio.");
+  }
+
+  if (!eventAt) {
+    throw new Error("La data dell'evento e obbligatoria.");
+  }
+
+  const { data: existingEvent, error: existingEventError } = await supabase
+    .from("events")
+    .select("id, creator_id")
+    .eq("id", eventId)
+    .maybeSingle();
+
+  if (existingEventError) throw existingEventError;
+
+  if (!existingEvent) {
+    throw new Error("Evento non trovato.");
+  }
+
+  if (existingEvent.creator_id !== user.id) {
+    throw new Error("Non puoi modificare questo evento.");
+  }
+
+  const { error } = await supabase
+    .from("events")
+    .update({
+      title,
+      description,
+      category,
+      event_at: new Date(eventAt).toISOString(),
+      location_name: locationName,
+      address,
+      latitude,
+      longitude,
+      price,
+      max_members: maxMembers,
+      website_url: websiteUrl,
+      maps_url: mapsUrl,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", eventId)
+    .eq("creator_id", user.id);
+
+  if (error) throw error;
+
+  const { data: updatedEvent, error: updatedEventError } = await supabase
+    .from("events")
+    .select(
+      `
+      *,
+      event_images (*),
+      event_members (
+        event_id,
+        user_id,
+        role,
+        joined_at,
+        profile:user_id (
+          id,
+          username,
+          full_name,
+          birth_date,
+          avatar_url,
+          bio,
+          city
+        )
+      )
+    `,
+    )
+    .eq("id", eventId)
+    .maybeSingle();
+
+  if (updatedEventError) throw updatedEventError;
+
+  return updatedEvent;
 }

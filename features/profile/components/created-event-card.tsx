@@ -1,10 +1,12 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import {
   Badge,
   Button,
   Card,
+  DataList,
   Flex,
   Heading,
   Inset,
@@ -25,12 +27,14 @@ export default function CreatedEventCard({ event }: CreatedEventCardProps) {
   return (
     <Card size="3">
       <Inset clip="padding-box" side="top" pb="current">
-        <div className="aspect-[16/9] w-full overflow-hidden bg-zinc-100">
+        <div className="relative aspect-video w-full overflow-hidden bg-zinc-100">
           {cover ? (
-            <img
+            <Image
               src={cover}
               alt={event.title}
-              className="h-full w-full object-cover"
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 50vw"
             />
           ) : (
             <Flex align="center" justify="center" className="h-full w-full">
@@ -58,20 +62,39 @@ export default function CreatedEventCard({ event }: CreatedEventCardProps) {
           {event.description ?? "Nessuna descrizione disponibile."}
         </Text>
 
-        <Flex direction="column" gap="1">
-          <Text size="2">
-            {new Date(event.event_at).toLocaleString("it-IT")}
-          </Text>
-          <Text size="2">{event.location_name ?? "Luogo da definire"}</Text>
-          <Text size="2">
-            {joinedMembers}
-            {event.max_members ? ` / ${event.max_members}` : ""} membri
-          </Text>
-        </Flex>
+        <DataList.Root>
+          <DataList.Item>
+            <DataList.Label minWidth="88px">Data</DataList.Label>
+            <DataList.Value>
+              {new Date(event.event_at).toLocaleString("it-IT")}
+            </DataList.Value>
+          </DataList.Item>
 
-        <Flex gap="2">
-          <Link href={`/events/${event.id}`} className="flex-1">
+          <DataList.Item>
+            <DataList.Label minWidth="88px">Luogo</DataList.Label>
+            <DataList.Value>
+              {event.location_name ?? "Luogo da definire"}
+            </DataList.Value>
+          </DataList.Item>
+
+          <DataList.Item>
+            <DataList.Label minWidth="88px">Membri</DataList.Label>
+            <DataList.Value>
+              {joinedMembers}
+              {event.max_members ? ` / ${event.max_members}` : ""}
+            </DataList.Value>
+          </DataList.Item>
+        </DataList.Root>
+
+        <Flex gap="2" wrap="wrap">
+          <Link href={`/events/${event.id}`} className="flex-1 min-w-35">
             <Button className="w-full">Apri evento</Button>
+          </Link>
+
+          <Link href={`/events/${event.id}/edit`} className="flex-1 min-w-35">
+            <Button variant="soft" className="w-full">
+              Modifica
+            </Button>
           </Link>
 
           <Button
