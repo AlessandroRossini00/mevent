@@ -10,19 +10,20 @@ import {
   uploadEventImage,
 } from "@/features/events/services/event-storage";
 import { useEventsStore } from "@/features/events/store/events";
-import { useProfileStore } from "@/features/profile/store/profile";
-import type { JoinedEvent } from "@/features/events/services/types";
-import type { CreatedEvent } from "@/features/profile/services/types";
+import type {
+  CreatedEvent,
+  JoinedEvent,
+} from "@/features/events/services/types";
 
 export function useEventActions() {
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const upsertJoinedEvent = useEventsStore((state) => state.upsertJoinedEvent);
-  const setCurrentEvent = useEventsStore((state) => state.setCurrentEvent);
-  const upsertCreatedEvent = useProfileStore(
+  const upsertCreatedEvent = useEventsStore(
     (state) => state.upsertCreatedEvent,
   );
+  const setCurrentEvent = useEventsStore((state) => state.setCurrentEvent);
 
   const joinEvent = async (eventId: string) => {
     setIsPending(true);
@@ -31,7 +32,7 @@ export function useEventActions() {
     try {
       const result = await joinEventAction(eventId);
 
-      if (result.type === "joined" && "event" in result && result.event) {
+      if (result.type === "joined" && result.event) {
         upsertJoinedEvent(result.event as JoinedEvent);
         setCurrentEvent(result.event as JoinedEvent);
       }

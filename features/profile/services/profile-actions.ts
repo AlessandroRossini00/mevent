@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { PROFILE_LIMITS } from "@/features/profile/services/constants";
 
 function toNullable(value: FormDataEntryValue | null) {
   const text = String(value ?? "").trim();
@@ -28,15 +29,49 @@ export async function updateProfileAction(formData: FormData) {
 
   if (!user) redirect("/login");
 
-  const username = toNullable(formData.get("username"));
+  const username = String(formData.get("username") ?? "").trim();
   const fullName = String(formData.get("full_name") ?? "").trim();
-  const birthDate = toNullable(formData.get("birth_date"));
+  const birthDate = String(formData.get("birth_date") ?? "").trim();
   const bio = toNullable(formData.get("bio"));
-  const city = toNullable(formData.get("city"));
+  const city = String(formData.get("city") ?? "").trim();
   const avatar = formData.get("avatar") as File | null;
+
+  if (!username) {
+    throw new Error("Lo username è obbligatorio.");
+  }
 
   if (!fullName) {
     throw new Error("Il nome completo è obbligatorio.");
+  }
+
+  if (!birthDate) {
+    throw new Error("La data di nascita è obbligatoria.");
+  }
+
+  if (!city) {
+    throw new Error("La città è obbligatoria.");
+  }
+
+  if (fullName.length > PROFILE_LIMITS.fullName) {
+    throw new Error(
+      `Il nome completo non può superare ${PROFILE_LIMITS.fullName} caratteri.`,
+    );
+  }
+
+  if (username.length > PROFILE_LIMITS.username) {
+    throw new Error(
+      `Lo username non può superare ${PROFILE_LIMITS.username} caratteri.`,
+    );
+  }
+
+  if (city.length > PROFILE_LIMITS.city) {
+    throw new Error(
+      `La città non può superare ${PROFILE_LIMITS.city} caratteri.`,
+    );
+  }
+
+  if (bio && bio.length > PROFILE_LIMITS.bio) {
+    throw new Error(`La bio non può superare ${PROFILE_LIMITS.bio} caratteri.`);
   }
 
   const { data: currentProfile, error: currentProfileError } = await supabase
@@ -112,24 +147,4 @@ export async function updateProfileAction(formData: FormData) {
     success: true,
     avatar_url: nextAvatarUrl,
   };
-}
-
-export async function deleteCreatedEventAction(eventId: string) {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/login");
-
-  const { error } = await supabase
-    .from("events")
-    .delete()
-    .eq("id", eventId)
-    .eq("creator_id", user.id);
-
-  if (error) throw error;
-
-  return { success: true };
 }

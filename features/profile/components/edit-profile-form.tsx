@@ -1,9 +1,8 @@
 "use client";
 
-import Image from "next/image";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import {
-  Avatar,
+  Box,
   Button,
   Card,
   Flex,
@@ -11,14 +10,50 @@ import {
   TextArea,
   TextField,
 } from "@radix-ui/themes";
+import ProfileAvatarPreview from "@/features/profile/components/profile-avatar-preview";
 import { useProfileActions } from "@/features/profile/hooks/use-profile-actions";
+import { PROFILE_LIMITS } from "@/features/profile/services/constants";
 import type { Profile } from "@/features/profile/services/types";
 
 type EditProfileFormProps = {
   profile: Profile;
+  onCancel: () => void;
+  onSuccess: () => void;
 };
 
-export default function EditProfileForm({ profile }: EditProfileFormProps) {
+type FieldBlockProps = {
+  label: string;
+  counter?: string;
+  children: React.ReactNode;
+};
+
+function FieldBlock({ label, counter, children }: FieldBlockProps) {
+  return (
+    <Box className="rounded-xl border border-black/8 bg-black/2 p-4">
+      <Flex direction="column" gap="2">
+        <Flex justify="between" align="center" gap="3">
+          <Text size="1" weight="medium" color="gray">
+            {label}
+          </Text>
+
+          {counter ? (
+            <Text size="1" color="gray">
+              {counter}
+            </Text>
+          ) : null}
+        </Flex>
+
+        {children}
+      </Flex>
+    </Box>
+  );
+}
+
+export default function EditProfileForm({
+  profile,
+  onCancel,
+  onSuccess,
+}: EditProfileFormProps) {
   const { updateProfile, actionError } = useProfileActions();
   const [isPending, startTransition] = useTransition();
   const [localError, setLocalError] = useState<string | null>(null);
@@ -26,12 +61,28 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
     profile.avatar_url ?? null,
   );
 
+  const [usernameValue, setUsernameValue] = useState(profile.username ?? "");
+  const [fullNameValue, setFullNameValue] = useState(profile.full_name ?? "");
+  const [cityValue, setCityValue] = useState(profile.city ?? "");
+  const [bioValue, setBioValue] = useState(profile.bio ?? "");
+
+  const objectUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+      }
+    };
+  }, []);
+
   const handleSubmit = (formData: FormData) => {
     setLocalError(null);
 
     startTransition(async () => {
       try {
         await updateProfile(formData);
+        onSuccess();
       } catch (err) {
         setLocalError(
           err instanceof Error ? err.message : "Errore aggiornamento profilo",
@@ -40,104 +91,131 @@ export default function EditProfileForm({ profile }: EditProfileFormProps) {
     });
   };
 
+  const fallback =
+    profile.full_name?.slice(0, 2).toUpperCase() ??
+    profile.username?.slice(0, 2).toUpperCase() ??
+    "US";
+
   return (
-    <Card size="3">
+    <Card size="4">
       <form action={handleSubmit}>
-        <Flex direction="column" gap="4">
-          <Text size="3" weight="medium">
-            Modifica profilo
-          </Text>
-
-          <Flex direction="column" gap="3" align="start">
-            <Text size="2" weight="medium">
-              Foto profilo
-            </Text>
-
-            {previewUrl ? (
-              <div className="relative h-24 w-24 overflow-hidden rounded-full">
-                <Image
-                  src={previewUrl}
-                  alt={profile.full_name}
-                  fill
-                  className="object-cover"
-                  sizes="96px"
-                />
-              </div>
-            ) : (
-              <Avatar
-                fallback={profile.full_name.slice(0, 2).toUpperCase()}
-                size="6"
-                radius="full"
-              />
-            )}
-
-            <input
-              name="avatar"
-              type="file"
-              accept="image/*"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (!file) return;
+        <Flex direction="column" gap="5" align="center">
+          <Flex direction="column" align="center" gap="2">
+            <ProfileAvatarPreview
+              src={previewUrl}
+              alt={profile.full_name}
+              fallback={fallback}
+              size={120}
+              editable
+              inputName="avatar"
+              onFileChange={(file) => {
+                if (objectUrlRef.current) {
+                  URL.revokeObjectURL(objectUrlRef.current);
+                }
 
                 const objectUrl = URL.createObjectURL(file);
+                objectUrlRef.current = objectUrl;
                 setPreviewUrl(objectUrl);
               }}
             />
+
+            <Text size="1" color="gray" align="center">
+              Tocca la foto per l&apos;anteprima o la matita per cambiarla
+            </Text>
           </Flex>
 
-          <div>
-            <Text as="label" size="2" weight="medium">
-              Username
-            </Text>
-            <TextField.Root
-              name="username"
-              defaultValue={profile.username ?? ""}
-            />
+          <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-2">
+            <FieldBlock
+              label="Username"
+              counter={`${usernameValue.length}/${PROFILE_LIMITS.username}`}
+            >
+              <TextField.Root
+                name="username"
+                value={usernameValue}
+                placeholder="username"
+                maxLength={PROFILE_LIMITS.username}
+                required
+                onChange={(event) => setUsernameValue(event.target.value)}
+              />
+            </FieldBlock>
+
+            <FieldBlock
+              label="Nome completo"
+              counter={`${fullNameValue.length}/${PROFILE_LIMITS.fullName}`}
+            >
+              <TextField.Root
+                name="full_name"
+                value={fullNameValue}
+                placeholder="Mario Rossi"
+                maxLength={PROFILE_LIMITS.fullName}
+                required
+                onChange={(event) => setFullNameValue(event.target.value)}
+              />
+            </FieldBlock>
+
+            <FieldBlock label="Data di nascita">
+              <TextField.Root
+                name="birth_date"
+                type="date"
+                defaultValue={profile.birth_date ?? ""}
+                required
+              />
+            </FieldBlock>
+
+            <FieldBlock
+              label="Città"
+              counter={`${cityValue.length}/${PROFILE_LIMITS.city}`}
+            >
+              <TextField.Root
+                name="city"
+                value={cityValue}
+                placeholder="Milano"
+                maxLength={PROFILE_LIMITS.city}
+                required
+                onChange={(event) => setCityValue(event.target.value)}
+              />
+            </FieldBlock>
           </div>
 
-          <div>
-            <Text as="label" size="2" weight="medium">
-              Nome completo
-            </Text>
-            <TextField.Root
-              name="full_name"
-              defaultValue={profile.full_name}
-              required
-            />
-          </div>
+          <Box className="w-full rounded-xl border border-black/8 bg-black/2 p-4">
+            <Flex direction="column" gap="2">
+              <Flex justify="between" align="center" gap="3">
+                <Text size="1" weight="medium" color="gray">
+                  Bio
+                </Text>
+                <Text size="1" color="gray">
+                  {bioValue.length}/{PROFILE_LIMITS.bio}
+                </Text>
+              </Flex>
 
-          <div>
-            <Text as="label" size="2" weight="medium">
-              Data di nascita
-            </Text>
-            <TextField.Root
-              name="birth_date"
-              type="date"
-              defaultValue={profile.birth_date ?? ""}
-            />
-          </div>
-
-          <div>
-            <Text as="label" size="2" weight="medium">
-              Città
-            </Text>
-            <TextField.Root name="city" defaultValue={profile.city ?? ""} />
-          </div>
-
-          <div>
-            <Text as="label" size="2" weight="medium">
-              Bio
-            </Text>
-            <TextArea name="bio" defaultValue={profile.bio ?? ""} />
-          </div>
+              <TextArea
+                name="bio"
+                value={bioValue}
+                placeholder="Racconta qualcosa su di te"
+                maxLength={PROFILE_LIMITS.bio}
+                onChange={(event) => setBioValue(event.target.value)}
+              />
+            </Flex>
+          </Box>
 
           {localError || actionError ? (
             <Text color="red">{localError ?? actionError}</Text>
           ) : null}
 
-          <Button type="submit" loading={isPending}>
-            Salva modifiche
-          </Button>
+          <Flex className="w-full" gap="3" justify="end">
+            <Button
+              type="button"
+              variant="soft"
+              color="gray"
+              onClick={onCancel}
+            >
+              Annulla
+            </Button>
+
+            <Button type="submit" loading={isPending}>
+              Salva modifiche
+            </Button>
+          </Flex>
         </Flex>
       </form>
     </Card>

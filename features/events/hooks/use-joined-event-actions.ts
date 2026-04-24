@@ -10,7 +10,9 @@ import { useEventsStore } from "@/features/events/store/events";
 export function useJoinedEventActions() {
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   const removeJoinedEvent = useEventsStore((state) => state.removeJoinedEvent);
+  const removeEvent = useEventsStore((state) => state.removeEvent);
 
   const leaveEvent = async (eventId: string) => {
     setIsPending(true);
@@ -35,7 +37,7 @@ export function useJoinedEventActions() {
 
     try {
       await deleteEventAction(eventId);
-      removeJoinedEvent(eventId);
+      removeEvent(eventId);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Errore eliminazione evento";

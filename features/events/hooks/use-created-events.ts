@@ -1,18 +1,19 @@
 "use client";
 
 import { useEffect } from "react";
-import { getCreatedEventsQuery } from "@/features/profile/services/profile-queries";
-import { useProfileStore } from "@/features/profile/store/profile";
+import { getCreatedEventsQuery } from "@/features/events/services/event-queries";
+import { useEventsStore } from "@/features/events/store/events";
 
 export function useCreatedEvents() {
-  const events = useProfileStore((state) => state.createdEvents);
-  const isLoading = useProfileStore((state) => state.isLoadingCreatedEvents);
-  const error = useProfileStore((state) => state.error);
-  const setCreatedEvents = useProfileStore((state) => state.setCreatedEvents);
-  const setLoadingCreatedEvents = useProfileStore(
+  const events = useEventsStore((state) => state.createdEvents);
+  const isLoading = useEventsStore((state) => state.isLoadingCreatedEvents);
+  const error = useEventsStore((state) => state.error);
+
+  const setCreatedEvents = useEventsStore((state) => state.setCreatedEvents);
+  const setLoadingCreatedEvents = useEventsStore(
     (state) => state.setLoadingCreatedEvents,
   );
-  const setError = useProfileStore((state) => state.setError);
+  const setError = useEventsStore((state) => state.setError);
 
   useEffect(() => {
     let active = true;
@@ -21,11 +22,14 @@ export function useCreatedEvents() {
       try {
         setLoadingCreatedEvents(true);
         setError(null);
+
         const data = await getCreatedEventsQuery();
+
         if (!active) return;
         setCreatedEvents(data);
       } catch (err) {
         if (!active) return;
+
         setError(
           err instanceof Error
             ? err.message
@@ -43,5 +47,9 @@ export function useCreatedEvents() {
     };
   }, [setCreatedEvents, setLoadingCreatedEvents, setError]);
 
-  return { events, isLoading, error };
+  return {
+    events,
+    isLoading,
+    error,
+  };
 }

@@ -39,6 +39,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 zustand per gestire gli stati globali
 supabase per gestire il DB, autenticazione ecc
+npm install @radix-ui/react-icons
 
 ## Description project structure
 

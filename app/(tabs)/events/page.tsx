@@ -1,17 +1,9 @@
-import { Box, Flex, Heading, Text } from "@radix-ui/themes";
-import JoinedEventsList from "@/features/events/components/joined-events-list";
+import EventsDashboard from "@/features/events/components/events-dashboard";
 
 export default function EventsPage() {
   return (
-    <Box p="4">
-      <Flex direction="column" gap="4">
-        <div>
-          <Heading size="6">I miei eventi</Heading>
-          <Text color="gray">Qui trovi gli eventi a cui partecipi.</Text>
-        </div>
-
-        <JoinedEventsList />
-      </Flex>
-    </Box>
+    <main className="mx-auto w-full max-w-6xl px-4 py-6">
+      <EventsDashboard />
+    </main>
   );
 }

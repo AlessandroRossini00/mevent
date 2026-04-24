@@ -10,14 +10,6 @@ export type EventImage = {
   created_at: string;
 };
 
-export type EventMember = {
-  event_id: string;
-  user_id: string;
-  role: "member" | "admin";
-  joined_at: string;
-  profile: EventMemberProfile | null;
-};
-
 export type EventMemberProfile = {
   id: string;
   username: string | null;
@@ -26,6 +18,14 @@ export type EventMemberProfile = {
   avatar_url: string | null;
   bio: string | null;
   city: string | null;
+};
+
+export type EventMember = {
+  event_id: string;
+  user_id: string;
+  role: EventMemberRole;
+  joined_at: string;
+  profile: EventMemberProfile | null;
 };
 
 export type EventBase = {
@@ -56,20 +56,4 @@ export type EventWithRelations = EventBase & {
 };
 
 export type JoinedEvent = EventWithRelations;
-
-export type CreateEventInput = {
-  title: string;
-  description?: string | null;
-  category?: string | null;
-  event_at: string;
-  location_name?: string | null;
-  address?: string | null;
-  latitude?: number | null;
-  longitude?: number | null;
-  price?: number;
-  website_url?: string | null;
-  maps_url?: string | null;
-  max_members?: number | null;
-  visibility?: EventVisibility;
-  approval_mode?: EventApprovalMode;
-};
+export type CreatedEvent = EventWithRelations;

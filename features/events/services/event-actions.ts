@@ -16,6 +16,35 @@ function toNullableNumber(value: FormDataEntryValue | null) {
   return Number.isNaN(num) ? null : num;
 }
 
+const MAX_USER_EVENTS = 20;
+
+async function getUserEventsCount(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+) {
+  const { count, error } = await supabase
+    .from("event_members")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId);
+
+  if (error) throw error;
+
+  return count ?? 0;
+}
+
+async function assertUserCanAddEvent(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+) {
+  const count = await getUserEventsCount(supabase, userId);
+
+  if (count >= MAX_USER_EVENTS) {
+    throw new Error(
+      `Hai raggiunto il limite massimo di ${MAX_USER_EVENTS} eventi.`,
+    );
+  }
+}
+
 export async function createEventAction(formData: FormData) {
   const supabase = await createClient();
 
@@ -24,6 +53,7 @@ export async function createEventAction(formData: FormData) {
   } = await supabase.auth.getUser();
 
   if (!user) redirect("/login");
+  await assertUserCanAddEvent(supabase, user.id);
 
   const title = String(formData.get("title") ?? "").trim();
   const eventAt = String(formData.get("event_at") ?? "").trim();
@@ -84,16 +114,26 @@ export async function joinEventAction(eventId: string) {
 
   if (!user) redirect("/login");
 
-  const { error: joinError } = await supabase.from("event_members").upsert(
-    {
+  const { data: existingMember, error: existingMemberError } = await supabase
+    .from("event_members")
+    .select("event_id, user_id, role")
+    .eq("event_id", eventId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (existingMemberError) throw existingMemberError;
+
+  if (!existingMember) {
+    await assertUserCanAddEvent(supabase, user.id);
+
+    const { error: joinError } = await supabase.from("event_members").insert({
       event_id: eventId,
       user_id: user.id,
       role: "member",
-    },
-    { onConflict: "event_id,user_id" },
-  );
+    });
 
-  if (joinError) throw joinError;
+    if (joinError) throw joinError;
+  }
 
   const { data: joinedEvent, error: joinedEventError } = await supabase
     .from("events")

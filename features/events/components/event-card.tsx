@@ -12,17 +12,27 @@ import {
   Inset,
   Text,
 } from "@radix-ui/themes";
-import { useProfileActions } from "@/features/profile/hooks/use-profile-actions";
-import type { CreatedEvent } from "@/features/profile/services/types";
+import { useAuth } from "@/features/auth/hook/use-auth";
+import { useJoinedEventActions } from "@/features/events/hooks/use-joined-event-actions";
+import type { EventWithRelations } from "@/features/events/services/types";
 
-type CreatedEventCardProps = {
-  event: CreatedEvent;
+type EventCardProps = {
+  event: EventWithRelations;
+  isCreated?: boolean;
+  isJoined?: boolean;
 };
 
-export default function CreatedEventCard({ event }: CreatedEventCardProps) {
-  const { deleteCreatedEvent, isPending, actionError } = useProfileActions();
+export default function EventCard({
+  event,
+  isCreated = false,
+  isJoined = false,
+}: EventCardProps) {
+  const { user } = useAuth();
+  const { leaveEvent, deleteEvent, isPending, error } = useJoinedEventActions();
+
   const cover = event.event_images?.[0]?.image_url ?? null;
   const joinedMembers = event.event_members?.length ?? 0;
+  const isCreator = isCreated || user?.id === event.creator_id;
 
   return (
     <Card size="3">
@@ -53,9 +63,15 @@ export default function CreatedEventCard({ event }: CreatedEventCardProps) {
             <Heading size="4">{event.title}</Heading>
           </div>
 
-          <Badge color="gray" variant="soft">
-            {event.status}
-          </Badge>
+          {isCreator ? (
+            <Badge color="jade" variant="soft">
+              Creato da te
+            </Badge>
+          ) : isJoined ? (
+            <Badge color="blue" variant="soft">
+              Partecipi
+            </Badge>
+          ) : null}
         </Flex>
 
         <Text color="gray">
@@ -81,7 +97,7 @@ export default function CreatedEventCard({ event }: CreatedEventCardProps) {
             <DataList.Label minWidth="88px">Membri</DataList.Label>
             <DataList.Value>
               {joinedMembers}
-              {event.max_members ? ` / ${event.max_members}` : ""}
+              {event.max_members ? ` / ${event.max_members}` : ""} membri
             </DataList.Value>
           </DataList.Item>
         </DataList.Root>
@@ -91,23 +107,39 @@ export default function CreatedEventCard({ event }: CreatedEventCardProps) {
             <Button className="w-full">Apri evento</Button>
           </Link>
 
-          <Link href={`/events/${event.id}/edit`} className="flex-1 min-w-35">
-            <Button variant="soft" className="w-full">
-              Modifica
-            </Button>
-          </Link>
+          {isCreator ? (
+            <>
+              <Link
+                href={`/events/${event.id}/edit`}
+                className="flex-1 min-w-35"
+              >
+                <Button variant="soft" className="w-full">
+                  Modifica
+                </Button>
+              </Link>
 
-          <Button
-            color="red"
-            variant="soft"
-            onClick={() => void deleteCreatedEvent(event.id)}
-            loading={isPending}
-          >
-            Elimina
-          </Button>
+              <Button
+                color="red"
+                variant="soft"
+                onClick={() => void deleteEvent(event.id)}
+                loading={isPending}
+              >
+                Elimina
+              </Button>
+            </>
+          ) : (
+            <Button
+              color="red"
+              variant="soft"
+              onClick={() => void leaveEvent(event.id)}
+              loading={isPending}
+            >
+              Esci
+            </Button>
+          )}
         </Flex>
 
-        {actionError ? <Text color="red">{actionError}</Text> : null}
+        {error ? <Text color="red">{error}</Text> : null}
       </Flex>
     </Card>
   );
