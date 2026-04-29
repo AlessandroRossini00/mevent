@@ -2,6 +2,12 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import {
+  EVENT_CATEGORIES,
+  EVENT_LIMITS,
+} from "@/features/events/services/constants";
+
+const MAX_USER_EVENTS = 20;
 
 function toNullable(value: FormDataEntryValue | null) {
   const text = String(value ?? "").trim();
@@ -15,8 +21,6 @@ function toNullableNumber(value: FormDataEntryValue | null) {
   const num = Number(text);
   return Number.isNaN(num) ? null : num;
 }
-
-const MAX_USER_EVENTS = 20;
 
 async function getUserEventsCount(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -45,6 +49,90 @@ async function assertUserCanAddEvent(
   }
 }
 
+function validateEventInput(formData: FormData) {
+  const title = String(formData.get("title") ?? "").trim();
+  const description = toNullable(formData.get("description"));
+  const category = String(formData.get("category") ?? "").trim();
+  const eventAt = String(formData.get("event_at") ?? "").trim();
+
+  const locationName = toNullable(formData.get("location_name"));
+  const address = toNullable(formData.get("address"));
+  const latitude = toNullableNumber(formData.get("latitude"));
+  const longitude = toNullableNumber(formData.get("longitude"));
+  const rawMapsUrl = toNullable(formData.get("maps_url"));
+
+  const price = toNullableNumber(formData.get("price")) ?? 0;
+  const maxMembers = toNullableNumber(formData.get("max_members"));
+  const websiteUrl = toNullable(formData.get("website_url"));
+
+  if (!title) {
+    throw new Error("Il titolo è obbligatorio.");
+  }
+
+  if (title.length > EVENT_LIMITS.title) {
+    throw new Error(
+      `Il titolo non può superare ${EVENT_LIMITS.title} caratteri.`,
+    );
+  }
+
+  if (description && description.length > EVENT_LIMITS.description) {
+    throw new Error(
+      `La descrizione non può superare ${EVENT_LIMITS.description} caratteri.`,
+    );
+  }
+
+  if (
+    !EVENT_CATEGORIES.includes(category as (typeof EVENT_CATEGORIES)[number])
+  ) {
+    throw new Error("Categoria non valida.");
+  }
+
+  if (!eventAt) {
+    throw new Error("La data e ora è obbligatoria.");
+  }
+
+  const parsedDate = new Date(eventAt);
+  if (Number.isNaN(parsedDate.getTime())) {
+    throw new Error("Data e ora non valide.");
+  }
+
+  if (maxMembers !== null) {
+    if (maxMembers < 1) {
+      throw new Error("Il numero massimo di membri deve essere almeno 1.");
+    }
+
+    if (maxMembers > EVENT_LIMITS.maxMembers) {
+      throw new Error(
+        `Il numero massimo di membri non può superare ${EVENT_LIMITS.maxMembers}.`,
+      );
+    }
+  }
+
+  if (price < 0) {
+    throw new Error("Il prezzo non può essere negativo.");
+  }
+
+  const mapsUrl =
+    latitude !== null && longitude !== null
+      ? `https://www.google.com/maps?q=${latitude},${longitude}`
+      : rawMapsUrl;
+
+  return {
+    title,
+    description,
+    category,
+    eventAt,
+    locationName,
+    address,
+    latitude,
+    longitude,
+    price,
+    maxMembers,
+    websiteUrl,
+    mapsUrl,
+  };
+}
+
 export async function createEventAction(formData: FormData) {
   const supabase = await createClient();
 
@@ -53,44 +141,33 @@ export async function createEventAction(formData: FormData) {
   } = await supabase.auth.getUser();
 
   if (!user) redirect("/login");
+
   await assertUserCanAddEvent(supabase, user.id);
 
-  const title = String(formData.get("title") ?? "").trim();
-  const eventAt = String(formData.get("event_at") ?? "").trim();
-
-  if (!title) redirect("/events/new?message=Inserisci il titolo.");
-  if (!eventAt) redirect("/events/new?message=Inserisci data e ora.");
+  const input = validateEventInput(formData);
 
   const { data, error } = await supabase
     .from("events")
     .insert({
       creator_id: user.id,
-      title,
-      description: toNullable(formData.get("description")),
-      category: toNullable(formData.get("category")),
-      event_at: eventAt,
-      location_name: toNullable(formData.get("location_name")),
-      address: toNullable(formData.get("address")),
-      latitude: formData.get("latitude")
-        ? Number(formData.get("latitude"))
-        : null,
-      longitude: formData.get("longitude")
-        ? Number(formData.get("longitude"))
-        : null,
-      price: formData.get("price") ? Number(formData.get("price")) : 0,
-      website_url: toNullable(formData.get("website_url")),
-      maps_url: toNullable(formData.get("maps_url")),
-      max_members: formData.get("max_members")
-        ? Number(formData.get("max_members"))
-        : null,
+      title: input.title,
+      description: input.description,
+      category: input.category,
+      event_at: input.eventAt,
+      location_name: input.locationName,
+      address: input.address,
+      latitude: input.latitude,
+      longitude: input.longitude,
+      price: input.price,
+      website_url: input.websiteUrl,
+      maps_url: input.mapsUrl,
+      max_members: input.maxMembers,
       status: "active",
     })
     .select("id")
     .single();
 
-  if (error) {
-    redirect(`/events/new?message=${encodeURIComponent(error.message)}`);
-  }
+  if (error) throw error;
 
   const { error: memberError } = await supabase.from("event_members").insert({
     event_id: data.id,
@@ -98,11 +175,9 @@ export async function createEventAction(formData: FormData) {
     role: "admin",
   });
 
-  if (memberError) {
-    redirect(`/events/new?message=${encodeURIComponent(memberError.message)}`);
-  }
+  if (memberError) throw memberError;
 
-  redirect(`/events/${data.id}`);
+  return { eventId: data.id };
 }
 
 export async function joinEventAction(eventId: string) {
@@ -162,10 +237,7 @@ export async function joinEventAction(eventId: string) {
     .maybeSingle();
 
   if (joinedEventError) throw joinedEventError;
-
-  if (!joinedEvent) {
-    throw new Error("Evento non trovato.");
-  }
+  if (!joinedEvent) throw new Error("Evento non trovato.");
 
   return {
     type: "joined" as const,
@@ -248,26 +320,7 @@ export async function updateEventAction(eventId: string, formData: FormData) {
 
   if (!user) redirect("/login");
 
-  const title = String(formData.get("title") ?? "").trim();
-  const description = toNullable(formData.get("description"));
-  const category = toNullable(formData.get("category"));
-  const eventAt = String(formData.get("event_at") ?? "").trim();
-  const locationName = toNullable(formData.get("location_name"));
-  const address = toNullable(formData.get("address"));
-  const latitude = toNullableNumber(formData.get("latitude"));
-  const longitude = toNullableNumber(formData.get("longitude"));
-  const price = toNullableNumber(formData.get("price")) ?? 0;
-  const maxMembers = toNullableNumber(formData.get("max_members"));
-  const websiteUrl = toNullable(formData.get("website_url"));
-  const mapsUrl = toNullable(formData.get("maps_url"));
-
-  if (!title) {
-    throw new Error("Il titolo e obbligatorio.");
-  }
-
-  if (!eventAt) {
-    throw new Error("La data dell'evento e obbligatoria.");
-  }
+  const input = validateEventInput(formData);
 
   const { data: existingEvent, error: existingEventError } = await supabase
     .from("events")
@@ -276,11 +329,7 @@ export async function updateEventAction(eventId: string, formData: FormData) {
     .maybeSingle();
 
   if (existingEventError) throw existingEventError;
-
-  if (!existingEvent) {
-    throw new Error("Evento non trovato.");
-  }
-
+  if (!existingEvent) throw new Error("Evento non trovato.");
   if (existingEvent.creator_id !== user.id) {
     throw new Error("Non puoi modificare questo evento.");
   }
@@ -288,18 +337,18 @@ export async function updateEventAction(eventId: string, formData: FormData) {
   const { error } = await supabase
     .from("events")
     .update({
-      title,
-      description,
-      category,
-      event_at: new Date(eventAt).toISOString(),
-      location_name: locationName,
-      address,
-      latitude,
-      longitude,
-      price,
-      max_members: maxMembers,
-      website_url: websiteUrl,
-      maps_url: mapsUrl,
+      title: input.title,
+      description: input.description,
+      category: input.category,
+      event_at: input.eventAt,
+      location_name: input.locationName,
+      address: input.address,
+      latitude: input.latitude,
+      longitude: input.longitude,
+      price: input.price,
+      website_url: input.websiteUrl,
+      maps_url: input.mapsUrl,
+      max_members: input.maxMembers,
       updated_at: new Date().toISOString(),
     })
     .eq("id", eventId)
@@ -307,33 +356,5 @@ export async function updateEventAction(eventId: string, formData: FormData) {
 
   if (error) throw error;
 
-  const { data: updatedEvent, error: updatedEventError } = await supabase
-    .from("events")
-    .select(
-      `
-      *,
-      event_images (*),
-      event_members (
-        event_id,
-        user_id,
-        role,
-        joined_at,
-        profile:user_id (
-          id,
-          username,
-          full_name,
-          birth_date,
-          avatar_url,
-          bio,
-          city
-        )
-      )
-    `,
-    )
-    .eq("id", eventId)
-    .maybeSingle();
-
-  if (updatedEventError) throw updatedEventError;
-
-  return updatedEvent;
+  return { eventId };
 }

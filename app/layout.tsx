@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "@radix-ui/themes/styles.css";
 import "./globals.css";
 import { Theme, ThemePanel } from "@radix-ui/themes";
+import "leaflet/dist/leaflet.css";
 
 import AuthProvider from "@/features/auth/components/auth-provider";
 

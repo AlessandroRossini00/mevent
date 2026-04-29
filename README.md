@@ -40,6 +40,8 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 zustand per gestire gli stati globali
 supabase per gestire il DB, autenticazione ecc
 npm install @radix-ui/react-icons
+npm install react-leaflet leaflet
+npm install -D @types/leaflet
 
 ## Description project structure
 

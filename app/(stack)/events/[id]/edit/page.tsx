@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import EditEventForm from "@/features/events/components/edit-event-form";
+import EditEventForm from "@/features/events/components/event-form/edit-event-form";
 
 type EditEventPageProps = {
   params: Promise<{

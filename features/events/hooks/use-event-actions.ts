@@ -10,19 +10,13 @@ import {
   uploadEventImage,
 } from "@/features/events/services/event-storage";
 import { useEventsStore } from "@/features/events/store/events";
-import type {
-  CreatedEvent,
-  JoinedEvent,
-} from "@/features/events/services/types";
+import type { JoinedEvent } from "@/features/events/services/types";
 
 export function useEventActions() {
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const upsertJoinedEvent = useEventsStore((state) => state.upsertJoinedEvent);
-  const upsertCreatedEvent = useEventsStore(
-    (state) => state.upsertCreatedEvent,
-  );
   const setCurrentEvent = useEventsStore((state) => state.setCurrentEvent);
 
   const joinEvent = async (eventId: string) => {
@@ -32,7 +26,7 @@ export function useEventActions() {
     try {
       const result = await joinEventAction(eventId);
 
-      if (result.type === "joined" && result.event) {
+      if (result.type === "joined" && "event" in result && result.event) {
         upsertJoinedEvent(result.event as JoinedEvent);
         setCurrentEvent(result.event as JoinedEvent);
       }
@@ -69,15 +63,7 @@ export function useEventActions() {
     setError(null);
 
     try {
-      const updatedEvent = await updateEventAction(eventId, formData);
-
-      if (updatedEvent) {
-        setCurrentEvent(updatedEvent);
-        upsertJoinedEvent(updatedEvent as JoinedEvent);
-        upsertCreatedEvent(updatedEvent as CreatedEvent);
-      }
-
-      return updatedEvent;
+      return await updateEventAction(eventId, formData);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Errore modifica evento";
