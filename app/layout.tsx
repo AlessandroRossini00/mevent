@@ -39,7 +39,7 @@ export default function RootLayout({
         <AuthProvider>
           <Theme>
             {children}
-            <ThemePanel />
+            {/* <ThemePanel /> */}
           </Theme>
         </AuthProvider>
       </body>

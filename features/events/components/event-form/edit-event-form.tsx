@@ -52,7 +52,6 @@ export default function EditEventForm({ event }: EditEventFormProps) {
         longitude: event.longitude,
         price: event.price,
         max_members: event.max_members,
-        website_url: event.website_url,
         maps_url: event.maps_url,
         image_url: event.event_images?.[0]?.image_url ?? null,
       }}

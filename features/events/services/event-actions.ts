@@ -63,7 +63,6 @@ function validateEventInput(formData: FormData) {
 
   const price = toNullableNumber(formData.get("price")) ?? 0;
   const maxMembers = toNullableNumber(formData.get("max_members"));
-  const websiteUrl = toNullable(formData.get("website_url"));
 
   if (!title) {
     throw new Error("Il titolo è obbligatorio.");
@@ -128,7 +127,6 @@ function validateEventInput(formData: FormData) {
     longitude,
     price,
     maxMembers,
-    websiteUrl,
     mapsUrl,
   };
 }
@@ -159,7 +157,6 @@ export async function createEventAction(formData: FormData) {
       latitude: input.latitude,
       longitude: input.longitude,
       price: input.price,
-      website_url: input.websiteUrl,
       maps_url: input.mapsUrl,
       max_members: input.maxMembers,
       status: "active",
@@ -346,7 +343,6 @@ export async function updateEventAction(eventId: string, formData: FormData) {
       latitude: input.latitude,
       longitude: input.longitude,
       price: input.price,
-      website_url: input.websiteUrl,
       maps_url: input.mapsUrl,
       max_members: input.maxMembers,
       updated_at: new Date().toISOString(),

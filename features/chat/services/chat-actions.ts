@@ -61,3 +61,26 @@ export async function sendEventMessage(
 
   return data as unknown as EventMessage;
 }
+
+export async function markEventChatAsRead(eventId: string) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect("/login");
+
+  const { error } = await supabase.from("event_message_reads").upsert(
+    {
+      event_id: eventId,
+      user_id: user.id,
+      last_read_at: new Date().toISOString(),
+    },
+    {
+      onConflict: "event_id,user_id",
+    },
+  );
+
+  if (error) throw error;
+}

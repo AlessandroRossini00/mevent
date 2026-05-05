@@ -6,7 +6,6 @@ import {
   Card,
   Flex,
   Select,
-  Switch,
   Text,
   TextArea,
   TextField,
@@ -18,6 +17,7 @@ import {
 } from "@/features/events/services/constants";
 import LocationPickerField from "@/features/events/components/event-form/location-picker-field";
 import EventImagePicker from "@/features/events/components/event-form/event-image-picker";
+import FieldBlock from "@/components/ui/field-block";
 
 export type EventFormValues = {
   title?: string | null;
@@ -30,7 +30,6 @@ export type EventFormValues = {
   longitude?: number | null;
   price?: number | null;
   max_members?: number | null;
-  website_url?: string | null;
   maps_url?: string | null;
   image_url?: string | null;
 };
@@ -43,32 +42,6 @@ type EventFormProps = {
   defaultValues?: EventFormValues;
   onSubmit: (formData: FormData) => void | Promise<void>;
 };
-
-type FieldProps = {
-  label: string;
-  counter?: string;
-  children: React.ReactNode;
-};
-
-function FieldBlock({ label, counter, children }: FieldProps) {
-  return (
-    <div className="rounded-xl border border-black/8 bg-black/[0.02] p-4">
-      <Flex direction="column" gap="2">
-        <Flex justify="between" align="center" gap="3">
-          <Text size="1" weight="medium" color="gray">
-            {label}
-          </Text>
-          {counter ? (
-            <Text size="1" color="gray">
-              {counter}
-            </Text>
-          ) : null}
-        </Flex>
-        {children}
-      </Flex>
-    </div>
-  );
-}
 
 export default function EventForm({
   title,
@@ -92,12 +65,6 @@ export default function EventForm({
       defaultValues?.max_members !== undefined
       ? String(defaultValues.max_members)
       : "",
-  );
-  const [hasWebsite, setHasWebsite] = useState(
-    Boolean(defaultValues?.website_url),
-  );
-  const [websiteValue, setWebsiteValue] = useState(
-    defaultValues?.website_url ?? "",
   );
 
   return (
@@ -208,36 +175,6 @@ export default function EventForm({
               </FieldBlock>
             </div>
           </Flex>
-
-          <FieldBlock label="Sito web">
-            <Flex justify="between" align="center" gap="3">
-              <Text size="2">Aggiungi un sito web</Text>
-              <Switch
-                checked={hasWebsite}
-                onCheckedChange={(checked) => {
-                  setHasWebsite(checked);
-                  if (!checked) {
-                    setWebsiteValue("");
-                  }
-                }}
-              />
-            </Flex>
-
-            {hasWebsite ? (
-              <Flex direction="column" gap="2">
-                <TextField.Root
-                  name="website_url"
-                  type="url"
-                  placeholder="https://example.com"
-                  value={websiteValue}
-                  onChange={(event) => setWebsiteValue(event.target.value)}
-                />
-                <Text size="1" color="gray">
-                  Inserisci un URL completo, per esempio ` https://example.com`
-                </Text>
-              </Flex>
-            ) : null}
-          </FieldBlock>
 
           {error ? <Text color="red">{error}</Text> : null}
 

@@ -14,40 +14,13 @@ import ProfileAvatarPreview from "@/features/profile/components/profile-avatar-p
 import { useProfileActions } from "@/features/profile/hooks/use-profile-actions";
 import { PROFILE_LIMITS } from "@/features/profile/services/constants";
 import type { Profile } from "@/features/profile/services/types";
+import FieldBlock from "@/components/ui/field-block";
 
 type EditProfileFormProps = {
   profile: Profile;
   onCancel: () => void;
   onSuccess: () => void;
 };
-
-type FieldBlockProps = {
-  label: string;
-  counter?: string;
-  children: React.ReactNode;
-};
-
-function FieldBlock({ label, counter, children }: FieldBlockProps) {
-  return (
-    <Box className="rounded-xl border border-black/8 bg-black/2 p-4">
-      <Flex direction="column" gap="2">
-        <Flex justify="between" align="center" gap="3">
-          <Text size="1" weight="medium" color="gray">
-            {label}
-          </Text>
-
-          {counter ? (
-            <Text size="1" color="gray">
-              {counter}
-            </Text>
-          ) : null}
-        </Flex>
-
-        {children}
-      </Flex>
-    </Box>
-  );
-}
 
 export default function EditProfileForm({
   profile,

@@ -3,29 +3,12 @@
 import { Box, Button, Card, Flex, Separator, Text } from "@radix-ui/themes";
 import ProfileAvatarPreview from "@/features/profile/components/profile-avatar-preview";
 import type { Profile } from "@/features/profile/services/types";
+import InfoBlock from "@/components/ui/info-block";
 
 type ProfileInfoCardProps = {
   profile: Profile;
   onEdit: () => void;
 };
-
-type InfoBlockProps = {
-  label: string;
-  value: string;
-};
-
-function InfoBlock({ label, value }: InfoBlockProps) {
-  return (
-    <Box className="rounded-xl border border-black/8 bg-black/2 p-4">
-      <Flex direction="column" gap="1">
-        <Text size="1" weight="medium" color="gray">
-          {label}
-        </Text>
-        <Text size="3">{value}</Text>
-      </Flex>
-    </Box>
-  );
-}
 
 function formatBirthDate(value: string | null) {
   if (!value) return "Non impostata";

@@ -15,7 +15,7 @@ export async function updateSession(request: NextRequest) {
     console.log("supabase/proxy : Dentro ");
     return supabaseResponse;
   }
-  console.log("supabase/proxy : Fuori ");
+  console.log("supabase/proxy", request.nextUrl.pathname);
   // With Fluid compute, don't put this client in a global environment
   // variable. Always create a new one on each request.
   const supabase = createServerClient(

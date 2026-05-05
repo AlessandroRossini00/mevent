@@ -1,4 +1,4 @@
-import EventDetailClient from "@/features/events/components/event-detail-client";
+import EventDetailClient from "@/features/events/components/event/event-detail-client";
 
 type EventDetailPageProps = {
   params: Promise<{

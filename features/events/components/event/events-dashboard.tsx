@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import {
   Box,
   Button,
+  Card,
   Flex,
   Grid,
   Heading,
@@ -13,7 +14,8 @@ import {
   Text,
 } from "@radix-ui/themes";
 import { useAuth } from "@/features/auth/hook/use-auth";
-import EventCard from "@/features/events/components/event-card";
+import { useEventUnreadCounts } from "@/features/chat/hooks/use-event-unread-counts";
+import EventCard from "@/features/events/components/event/event-card";
 import { useCreatedEvents } from "@/features/events/hooks/use-created-events";
 import { useJoinedEvents } from "@/features/events/hooks/use-joined-events";
 import type { EventWithRelations } from "@/features/events/services/types";
@@ -50,13 +52,8 @@ export default function EventsDashboard() {
   const usedSlots = useMemo(() => {
     const ids = new Set<string>();
 
-    for (const event of joinedEvents) {
-      ids.add(event.id);
-    }
-
-    for (const event of createdEvents) {
-      ids.add(event.id);
-    }
+    for (const event of joinedEvents) ids.add(event.id);
+    for (const event of createdEvents) ids.add(event.id);
 
     return ids.size;
   }, [joinedEvents, createdEvents]);
@@ -107,47 +104,58 @@ export default function EventsDashboard() {
     return Array.from(map.values());
   }, [filter, joinedEvents, createdEvents, user?.id]);
 
+  const eventIds = useMemo(() => events.map((item) => item.event.id), [events]);
+
+  const { counts: unreadCounts } = useEventUnreadCounts(eventIds);
+
   return (
     <Flex direction="column" gap="4">
-      <Flex justify="between" align="center" gap="4" wrap="wrap">
-        <Box>
-          <Heading size="6">Eventi</Heading>
-          <Text color="gray">
-            Vedi gli eventi a cui partecipi, quelli che hai creato o creane uno
-            nuovo.
-          </Text>
-        </Box>
+      <Card size="3">
+        <Flex
+          justify="between"
+          align="center"
+          gap="4"
+          wrap="wrap"
+          direction={{ initial: "column", sm: "row" }}
+        >
+          <Box>
+            <Heading size="6">Eventi</Heading>
+            <Text color="gray">
+              Gestisci i tuoi eventi, partecipa e creane di nuovi.
+            </Text>
+          </Box>
 
-        <Flex align="center" gap="3" wrap="wrap">
-          <Text size="2" color={hasReachedLimit ? "red" : "gray"}>
-            {usedSlots} / {MAX_USER_EVENTS} eventi
-          </Text>
+          <Flex align="center" gap="3" wrap="wrap">
+            <Text size="2" color={hasReachedLimit ? "red" : "gray"}>
+              {usedSlots} / {MAX_USER_EVENTS} eventi
+            </Text>
 
-          <SegmentedControl.Root
-            value={filter}
-            onValueChange={(value) => setFilter(value as EventsFilter)}
-          >
-            <SegmentedControl.Item value="all">Tutti</SegmentedControl.Item>
-            <SegmentedControl.Item value="joined">
-              Partecipi
-            </SegmentedControl.Item>
-            <SegmentedControl.Item value="created">
-              Creati
-            </SegmentedControl.Item>
-          </SegmentedControl.Root>
+            <SegmentedControl.Root
+              value={filter}
+              onValueChange={(value) => setFilter(value as EventsFilter)}
+            >
+              <SegmentedControl.Item value="all">Tutti</SegmentedControl.Item>
+              <SegmentedControl.Item value="joined">
+                Partecipi
+              </SegmentedControl.Item>
+              <SegmentedControl.Item value="created">
+                Creati
+              </SegmentedControl.Item>
+            </SegmentedControl.Root>
 
-          <Link
-            href={hasReachedLimit ? "#" : "/events/new"}
-            onClick={(event) => {
-              if (hasReachedLimit) {
-                event.preventDefault();
-              }
-            }}
-          >
-            <Button disabled={hasReachedLimit}>Crea evento</Button>
-          </Link>
+            <Link
+              href={hasReachedLimit ? "#" : "/events/new"}
+              onClick={(event) => {
+                if (hasReachedLimit) {
+                  event.preventDefault();
+                }
+              }}
+            >
+              <Button disabled={hasReachedLimit}>Crea evento</Button>
+            </Link>
+          </Flex>
         </Flex>
-      </Flex>
+      </Card>
 
       {hasReachedLimit ? (
         <Text size="2" color="red">
@@ -165,17 +173,20 @@ export default function EventsDashboard() {
       {error ? <Text color="red">{error}</Text> : null}
 
       {!isLoading && !error && events.length === 0 ? (
-        <Text color="gray">Non ci sono ancora eventi da mostrare.</Text>
+        <Card size="3">
+          <Text color="gray">Non ci sono ancora eventi da mostrare.</Text>
+        </Card>
       ) : null}
 
       {!isLoading && !error && events.length > 0 ? (
-        <Grid columns={{ initial: "1", md: "2", xl: "3" }} gap="4">
+        <Grid columns={{ initial: "1", md: "2" }} gap="4">
           {events.map((item) => (
             <EventCard
               key={item.event.id}
               event={item.event}
               isJoined={item.isJoined}
               isCreated={item.isCreated}
+              unreadCount={unreadCounts[item.event.id] ?? 0}
             />
           ))}
         </Grid>

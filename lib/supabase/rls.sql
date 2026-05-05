@@ -200,6 +200,32 @@ for delete
 to authenticated
 using (auth.uid() = sender_id);
 
+/*
+rls per event_message_reads, che tiene traccia di quando un utente ha letto l'ultima volta
+la chat di un evento, in modo da poter calcolare gli unread
+*/
+alter table public.event_message_reads enable row level security;
+
+create policy "Users can read their own chat reads"
+on public.event_message_reads
+for select
+to authenticated
+using (auth.uid() = user_id);
+
+create policy "Users can insert their own chat reads"
+on public.event_message_reads
+for insert
+to authenticated
+with check (auth.uid() = user_id);
+
+create policy "Users can update their own chat reads"
+on public.event_message_reads
+for update
+to authenticated
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+
 
 drop policy if exists "event_images_select_authenticated" on public.event_images;
 drop policy if exists "event_images_insert_creator" on public.event_images;

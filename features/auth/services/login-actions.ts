@@ -32,7 +32,7 @@ export async function login(
 export async function loginWithGoogle(): Promise<never> {
   console.log("GOOGLE");
   const supabase = await createClient();
-  const origin = (await headers()).get("origin") ?? "http://localhost:3000";
+  const origin = (await headers()).get("origin") ?? "http://192.168.1.44:3000";
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",

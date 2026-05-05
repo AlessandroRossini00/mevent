@@ -64,6 +64,16 @@ create table if not exists public.event_messages (
   deleted_at timestamptz
 );
 
+/*
+Tabella per tenere traccia di quando un utente ha letto i messaggi di un evento
+*/
+create table if not exists public.event_message_reads (
+  event_id uuid not null references public.events(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  last_read_at timestamptz not null default now(),
+  primary key (event_id, user_id)
+);
+
 create table if not exists public.event_images (
   id uuid primary key default gen_random_uuid(),
   event_id uuid not null references public.events(id) on delete cascade,
@@ -99,26 +109,4 @@ create index if not exists idx_event_messages_event_created_at on public.event_m
 create index if not exists idx_event_images_event_id on public.event_images(event_id);
 create index if not exists idx_notifications_user_id on public.notifications(user_id);
 create index if not exists idx_user_push_tokens_user_id on public.user_push_tokens(user_id);
-
-create or replace function public.set_updated_at()
-returns trigger
-language plpgsql
-as $$
-begin
-  new.updated_at = now();
-  return new;
-end;
-$$;
-
-drop trigger if exists trg_profiles_updated_at on public.profiles;
-create trigger trg_profiles_updated_at
-before update on public.profiles
-for each row
-execute procedure public.set_updated_at();
-
-drop trigger if exists trg_events_updated_at on public.events;
-create trigger trg_events_updated_at
-before update on public.events
-for each row
-execute procedure public.set_updated_at();
 
