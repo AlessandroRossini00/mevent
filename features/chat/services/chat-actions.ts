@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { EventMessage } from "@/features/chat/services/types";
+import { sendPushToUsers } from "@/features/pwa/services/send-push";
 
 export async function sendEventMessage(
   eventId: string,
@@ -59,7 +60,46 @@ export async function sendEventMessage(
 
   if (error) throw error;
 
-  return data as unknown as EventMessage;
+  const message = data as unknown as EventMessage;
+
+  const senderName =
+    message.sender?.full_name || message.sender?.username || "Un utente";
+
+  const { data: eventData, error: eventError } = await supabase
+    .from("events")
+    .select("id, title")
+    .eq("id", eventId)
+    .single();
+
+  if (eventError) throw eventError;
+
+  const { data: members, error: membersError } = await supabase
+    .from("event_members")
+    .select("user_id")
+    .eq("event_id", eventId)
+    .neq("user_id", user.id);
+
+  if (membersError) throw membersError;
+
+  const recipientIds = Array.from(
+    new Set((members ?? []).map((member) => member.user_id).filter(Boolean)),
+  );
+
+  if (recipientIds.length > 0) {
+    const notificationTitle = `Nuovo messaggio in ${eventData.title}`;
+    const notificationBody = `${senderName}: ${trimmedBody}`;
+    const notificationUrl = `/events/${eventId}/chat`;
+
+    await sendPushToUsers(recipientIds, {
+      title: notificationTitle,
+      body: notificationBody,
+      url: notificationUrl,
+      icon: "/icons/icon-256.png",
+      badge: "/icons/icon-256.png",
+    });
+  }
+
+  return message;
 }
 
 export async function markEventChatAsRead(eventId: string) {

@@ -14,6 +14,7 @@ type EventDetailClientProps = {
   eventId: string;
 };
 
+// TODO da elimininare
 export default function EventDetailClient({ eventId }: EventDetailClientProps) {
   const { user } = useAuth();
   const { event, isLoading, error } = useJoinedEvent(eventId);

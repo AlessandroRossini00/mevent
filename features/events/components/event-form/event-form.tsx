@@ -18,6 +18,7 @@ import {
 import LocationPickerField from "@/features/events/components/event-form/location-picker-field";
 import EventImagePicker from "@/features/events/components/event-form/event-image-picker";
 import FieldBlock from "@/components/ui/field-block";
+import ImagePicker from "@/components/ui/image-picker";
 
 export type EventFormValues = {
   title?: string | null;
@@ -77,7 +78,14 @@ export default function EventForm({
             {title}
           </Text>
 
-          <EventImagePicker defaultUrl={defaultValues?.image_url ?? null} />
+          <ImagePicker
+            variant="event"
+            src={defaultValues?.image_url ?? null}
+            alt="Immagine evento"
+            inputName="event_image"
+            dialogTitle="Anteprima immagine evento"
+            helperText="Tocca l'immagine per l'anteprima o la matita per cambiarla"
+          />
 
           <FieldBlock
             label="Titolo"

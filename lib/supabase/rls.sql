@@ -6,8 +6,6 @@ alter table public.event_members enable row level security;
 alter table public.event_join_requests enable row level security;
 alter table public.event_messages enable row level security;
 alter table public.event_images enable row level security;
-alter table public.notifications enable row level security;
-alter table public.user_push_tokens enable row level security;
 
 drop policy if exists "profiles_select_public" on public.profiles;
 drop policy if exists "profiles_insert_own" on public.profiles;
@@ -285,50 +283,39 @@ using (
   )
 );
 
+/* RLS for notifications */
+alter table public.notifications enable row level security;
 
-drop policy if exists "notifications_select_own" on public.notifications;
-drop policy if exists "notifications_update_own" on public.notifications;
-
-create policy "notifications_select_own"
+create policy "Users can read own notifications"
 on public.notifications
 for select
 to authenticated
 using (auth.uid() = user_id);
 
-create policy "notifications_update_own"
+create policy "Users can update own notifications"
 on public.notifications
 for update
 to authenticated
 using (auth.uid() = user_id)
 with check (auth.uid() = user_id);
 
+/* RLS for push subscriptions */
+alter table public.push_subscriptions enable row level security;
 
-drop policy if exists "user_push_tokens_select_own" on public.user_push_tokens;
-drop policy if exists "user_push_tokens_insert_own" on public.user_push_tokens;
-drop policy if exists "user_push_tokens_update_own" on public.user_push_tokens;
-drop policy if exists "user_push_tokens_delete_own" on public.user_push_tokens;
-
-create policy "user_push_tokens_select_own"
-on public.user_push_tokens
+create policy "Users can read own push subscriptions"
+on public.push_subscriptions
 for select
 to authenticated
 using (auth.uid() = user_id);
 
-create policy "user_push_tokens_insert_own"
-on public.user_push_tokens
+create policy "Users can insert own push subscriptions"
+on public.push_subscriptions
 for insert
 to authenticated
 with check (auth.uid() = user_id);
 
-create policy "user_push_tokens_update_own"
-on public.user_push_tokens
-for update
-to authenticated
-using (auth.uid() = user_id)
-with check (auth.uid() = user_id);
-
-create policy "user_push_tokens_delete_own"
-on public.user_push_tokens
+create policy "Users can delete own push subscriptions"
+on public.push_subscriptions
 for delete
 to authenticated
 using (auth.uid() = user_id);

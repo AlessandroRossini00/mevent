@@ -3,92 +3,162 @@
 import Image from "next/image";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Cross2Icon } from "@radix-ui/react-icons";
-import { Box, IconButton, Text } from "@radix-ui/themes";
+import { useState } from "react";
+import { Box, IconButton, Spinner, Text } from "@radix-ui/themes";
+
+type ImagePreviewVariant = "event" | "profile";
 
 type ImagePreviewDialogProps = {
+  variant?: ImagePreviewVariant;
   src?: string | null;
   alt: string;
   dialogTitle?: string;
   emptyText?: string;
+  fallback?: string;
   sizes?: string;
   aspectClassName?: string;
+  size?: number;
   overlay?: React.ReactNode;
 };
 
+// TODO togliere delle cose inutili, controllare const showCloseButton = !src || !isDialogImageLoading;
 export default function ImagePreviewDialog({
-  src,
+  variant = "event",
+  src = null,
   alt,
   dialogTitle = "Anteprima immagine",
   emptyText = "Nessuna immagine selezionata",
+  fallback = "IMG",
   sizes = "(max-width: 768px) 100vw, 720px",
   aspectClassName = "aspect-[16/10]",
+  size = 96,
   overlay,
 }: ImagePreviewDialogProps) {
+  const [open, setOpen] = useState(false);
+  const [isDialogImageLoading, setIsDialogImageLoading] = useState(
+    Boolean(src),
+  );
+
+  const isProfile = variant === "profile";
+
+  const outerClassName = isProfile ? "relative inline-block p-2" : "relative";
+  const containerClassName = isProfile
+    ? "relative overflow-hidden rounded-full border border-black/8 bg-black/[0.02]"
+    : "relative overflow-hidden rounded-2xl border border-black/8 bg-black/[0.02]";
+
+  const triggerClassName = isProfile
+    ? "relative block h-full w-full overflow-hidden rounded-full"
+    : `relative block w-full overflow-hidden ${aspectClassName}`;
+
+  const triggerStyle = isProfile
+    ? { width: `${size}px`, height: `${size}px` }
+    : undefined;
+
+  const imageClassName = isProfile
+    ? "object-cover rounded-full"
+    : "object-cover";
+
+  const fallbackNode = isProfile ? (
+    <Box className="flex h-full w-full items-center justify-center rounded-full bg-zinc-200 text-xl font-medium">
+      {fallback}
+    </Box>
+  ) : (
+    <Box className="absolute inset-0 flex items-center justify-center bg-zinc-100 text-center">
+      <Text color="gray">{emptyText}</Text>
+    </Box>
+  );
+
+  const showCloseButton = !src || !isDialogImageLoading;
+
   return (
-    <Dialog.Root>
-      <Box className="relative overflow-hidden border border-black/8 bg-black/[0.02]">
-        <Dialog.Trigger asChild>
-          <button
-            type="button"
-            className={`relative block w-full overflow-hidden ${aspectClassName}`}
-          >
-            {src ? (
-              <Image
-                src={src}
-                alt={alt}
-                fill
-                className="object-cover"
-                sizes={sizes}
-                unoptimized
-              />
-            ) : (
-              <Box className="absolute inset-0 flex items-center justify-center bg-zinc-100 text-center">
-                <Text color="gray">{emptyText}</Text>
-              </Box>
-            )}
-          </button>
-        </Dialog.Trigger>
+    <Dialog.Root
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen);
+        if (nextOpen) {
+          setIsDialogImageLoading(Boolean(src));
+        }
+      }}
+    >
+      <Box className={outerClassName}>
+        <Box className={containerClassName} style={triggerStyle}>
+          <Dialog.Trigger asChild>
+            <button type="button" className={triggerClassName}>
+              {src ? (
+                <Image
+                  src={src}
+                  alt={alt}
+                  fill
+                  className={imageClassName}
+                  sizes={isProfile ? `${size}px` : sizes}
+                  unoptimized
+                />
+              ) : (
+                fallbackNode
+              )}
+            </button>
+          </Dialog.Trigger>
+        </Box>
 
         {overlay ? (
-          <Box className="absolute bottom-3 right-3 z-10">{overlay}</Box>
+          <Box
+            position="absolute"
+            right={isProfile ? "0" : "12px"}
+            bottom={isProfile ? "0" : "12px"}
+            style={{ zIndex: 20 }}
+          >
+            {overlay}
+          </Box>
         ) : null}
       </Box>
 
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/70" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-auto max-w-none -translate-x-1/2 -translate-y-1/2 bg-transparent p-0 shadow-none focus:outline-none">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 bg-transparent p-0 shadow-none focus:outline-none">
           <Dialog.Title className="sr-only">{dialogTitle}</Dialog.Title>
 
-          <Box position="relative">
+          <Box position="relative" className="inline-block">
             {src ? (
-              <Image
-                src={src}
-                alt={alt}
-                width={1200}
-                height={800}
-                unoptimized
-                style={{
-                  maxWidth: "92vw",
-                  maxHeight: "85vh",
-                  width: "auto",
-                  height: "auto",
-                  borderRadius: "16px",
-                  display: "block",
-                }}
-              />
+              <>
+                {isDialogImageLoading ? (
+                  <Box className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/20">
+                    <Spinner size="3" />
+                  </Box>
+                ) : null}
+
+                <Image
+                  src={src}
+                  alt={alt}
+                  width={1200}
+                  height={800}
+                  unoptimized
+                  onLoad={() => setIsDialogImageLoading(false)}
+                  onError={() => setIsDialogImageLoading(false)}
+                  style={{
+                    maxWidth: "92vw",
+                    maxHeight: "85vh",
+                    width: "auto",
+                    height: "auto",
+                    borderRadius: "16px",
+                    display: "block",
+                  }}
+                />
+              </>
             ) : (
               <Box className="rounded-xl bg-white p-8">
-                <Text>{emptyText}</Text>
+                {isProfile ? fallback : emptyText}
               </Box>
             )}
 
-            <Box className="absolute right-3 top-3">
-              <Dialog.Close asChild>
-                <IconButton radius="full" variant="solid" color="gray">
-                  <Cross2Icon />
-                </IconButton>
-              </Dialog.Close>
-            </Box>
+            {showCloseButton ? (
+              <Box className="absolute right-3 top-3 z-10">
+                <Dialog.Close asChild>
+                  <IconButton radius="full" variant="solid" color="gray">
+                    <Cross2Icon />
+                  </IconButton>
+                </Dialog.Close>
+              </Box>
+            ) : null}
           </Box>
         </Dialog.Content>
       </Dialog.Portal>

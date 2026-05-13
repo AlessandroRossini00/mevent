@@ -42,6 +42,9 @@ supabase per gestire il DB, autenticazione ecc
 npm install @radix-ui/react-icons
 npm install react-leaflet leaflet
 npm install -D @types/leaflet
+npm install web-push
+npm i --save-dev @types/web-push
+npx web-push generate-vapid-keys
 
 ## Description project structure
 

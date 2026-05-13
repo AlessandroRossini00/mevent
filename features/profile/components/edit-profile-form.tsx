@@ -10,11 +10,11 @@ import {
   TextArea,
   TextField,
 } from "@radix-ui/themes";
-import ProfileAvatarPreview from "@/features/profile/components/profile-avatar-preview";
 import { useProfileActions } from "@/features/profile/hooks/use-profile-actions";
 import { PROFILE_LIMITS } from "@/features/profile/services/constants";
 import type { Profile } from "@/features/profile/services/types";
 import FieldBlock from "@/components/ui/field-block";
+import ImagePicker from "@/components/ui/image-picker";
 
 type EditProfileFormProps = {
   profile: Profile;
@@ -73,29 +73,19 @@ export default function EditProfileForm({
     <Card size="4">
       <form action={handleSubmit}>
         <Flex direction="column" gap="5" align="center">
-          <Flex direction="column" align="center" gap="2">
-            <ProfileAvatarPreview
-              src={previewUrl}
-              alt={profile.full_name}
-              fallback={fallback}
-              size={120}
-              editable
-              inputName="avatar"
-              onFileChange={(file) => {
-                if (objectUrlRef.current) {
-                  URL.revokeObjectURL(objectUrlRef.current);
-                }
-
-                const objectUrl = URL.createObjectURL(file);
-                objectUrlRef.current = objectUrl;
-                setPreviewUrl(objectUrl);
-              }}
-            />
-
-            <Text size="1" color="gray" align="center">
-              Tocca la foto per l&apos;anteprima o la matita per cambiarla
-            </Text>
-          </Flex>
+          <ImagePicker
+            variant="profile"
+            src={previewUrl}
+            alt={profile.full_name}
+            fallback={fallback}
+            size={120}
+            inputName="avatar"
+            dialogTitle="Anteprima foto profilo"
+            helperText="Tocca la foto per l'anteprima o la matita per cambiarla"
+            onFileChange={(file) => {
+              setPreviewUrl(URL.createObjectURL(file));
+            }}
+          />
 
           <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-2">
             <FieldBlock

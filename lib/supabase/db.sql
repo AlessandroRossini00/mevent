@@ -81,10 +81,10 @@ create table if not exists public.event_images (
   created_at timestamptz not null default now()
 );
 
-create table if not exists public.notifications (
+create table if not exists public.notifications  (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references public.profiles(id) on delete cascade,
-  type varchar not null check (type in ('join_request', 'join_approved', 'join_rejected', 'new_message', 'event_updated')),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  type varchar not null check (type in ('new_message', 'event_updated', 'event_deleted')),
   title varchar not null,
   body text,
   data jsonb,
@@ -92,11 +92,12 @@ create table if not exists public.notifications (
   created_at timestamptz not null default now()
 );
 
-create table if not exists public.user_push_tokens (
+create table if not exists public.push_subscriptions (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references public.profiles(id) on delete cascade,
-  token varchar not null,
-  platform varchar not null check (platform in ('ios', 'android', 'web')),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  endpoint text not null unique,
+  p256dh text not null,
+  auth text not null,
   created_at timestamptz not null default now()
 );
 
@@ -108,5 +109,7 @@ create index if not exists idx_event_messages_event_id on public.event_messages(
 create index if not exists idx_event_messages_event_created_at on public.event_messages(event_id, created_at);
 create index if not exists idx_event_images_event_id on public.event_images(event_id);
 create index if not exists idx_notifications_user_id on public.notifications(user_id);
-create index if not exists idx_user_push_tokens_user_id on public.user_push_tokens(user_id);
+create index if not exists idx_push_subscriptions_user_id on public.push_subscriptions(user_id);
+create index if not exists idx_notifications_user_id_read_at on public.notifications(user_id, read_at, created_at desc);
+
 

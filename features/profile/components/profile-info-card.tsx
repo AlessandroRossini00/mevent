@@ -1,9 +1,9 @@
 "use client";
 
 import { Box, Button, Card, Flex, Separator, Text } from "@radix-ui/themes";
-import ProfileAvatarPreview from "@/features/profile/components/profile-avatar-preview";
 import type { Profile } from "@/features/profile/services/types";
 import InfoBlock from "@/components/ui/info-block";
+import ImagePreviewDialog from "@/components/ui/image-preview-dialog";
 
 type ProfileInfoCardProps = {
   profile: Profile;
@@ -31,11 +31,13 @@ export default function ProfileInfoCard({
   return (
     <Card size="4">
       <Flex direction="column" gap="5" align="center">
-        <ProfileAvatarPreview
+        <ImagePreviewDialog
+          variant="profile"
           src={profile.avatar_url}
           alt={profile.full_name}
           fallback={fallback}
           size={120}
+          dialogTitle="Anteprima foto profilo"
         />
 
         <Separator size="4" />
