@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Cross2Icon } from "@radix-ui/react-icons";
+import { Cross2Icon, ImageIcon } from "@radix-ui/react-icons";
 import { useState } from "react";
 import { Box, IconButton, Spinner, Text } from "@radix-ui/themes";
 
@@ -44,7 +44,7 @@ export default function ImagePreviewDialog({
   const outerClassName = isProfile ? "relative inline-block p-2" : "relative";
   const containerClassName = isProfile
     ? "relative overflow-hidden rounded-full border border-black/8 bg-black/[0.02]"
-    : "relative overflow-hidden rounded-2xl border border-black/8 bg-black/[0.02]";
+    : "relative overflow-hidden rounded-xl border border-black/8 bg-black/[0.02]";
 
   const triggerClassName = isProfile
     ? "relative block h-full w-full overflow-hidden rounded-full"
@@ -59,12 +59,22 @@ export default function ImagePreviewDialog({
     : "object-cover";
 
   const fallbackNode = isProfile ? (
-    <Box className="flex h-full w-full items-center justify-center rounded-full bg-zinc-200 text-xl font-medium">
-      {fallback}
+    <Box className="absolute inset-0 bg-zinc-100">
+      <Image
+        src="/placeholder.png"
+        alt=""
+        fill
+        className="object-contain p-6 opacity-70"
+      />
     </Box>
   ) : (
-    <Box className="absolute inset-0 flex items-center justify-center bg-zinc-100 text-center">
-      <Text color="gray">{emptyText}</Text>
+    <Box className="absolute inset-0 bg-zinc-100">
+      <Image
+        src="/placeholder.png"
+        alt=""
+        fill
+        className="object-contain p-6 opacity-70"
+      />
     </Box>
   );
 
@@ -103,8 +113,8 @@ export default function ImagePreviewDialog({
         {overlay ? (
           <Box
             position="absolute"
-            right={isProfile ? "0" : "12px"}
-            bottom={isProfile ? "0" : "12px"}
+            right={isProfile ? "12px" : "12px"}
+            bottom={isProfile ? "12px" : "12px"}
             style={{ zIndex: 20 }}
           >
             {overlay}

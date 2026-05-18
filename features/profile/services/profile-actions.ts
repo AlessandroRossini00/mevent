@@ -3,21 +3,15 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PROFILE_LIMITS } from "@/features/profile/services/constants";
+import {
+  extractAvatarPath,
+  removeAvatar,
+  uploadAvatar,
+} from "@/features/profile/services/profile-storage";
 
 function toNullable(value: FormDataEntryValue | null) {
   const text = String(value ?? "").trim();
   return text || null;
-}
-
-function extractAvatarPath(publicUrl: string | null) {
-  if (!publicUrl) return null;
-
-  const marker = "/storage/v1/object/public/avatar-images/";
-  const index = publicUrl.indexOf(marker);
-
-  if (index === -1) return null;
-
-  return publicUrl.slice(index + marker.length);
 }
 
 export async function updateProfileAction(formData: FormData) {
@@ -88,25 +82,9 @@ export async function updateProfileAction(formData: FormData) {
   let uploadedPath: string | null = null;
 
   if (avatar && avatar.size > 0) {
-    const ext = avatar.name.split(".").pop()?.toLowerCase() || "jpg";
-    uploadedPath = `${user.id}/${crypto.randomUUID()}.${ext}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from("avatar-images")
-      .upload(uploadedPath, avatar, {
-        upsert: false,
-        contentType: avatar.type || undefined,
-      });
-
-    if (uploadError) {
-      throw new Error("Errore upload immagine profilo.");
-    }
-
-    const { data: publicUrlData } = supabase.storage
-      .from("avatar-images")
-      .getPublicUrl(uploadedPath);
-
-    nextAvatarUrl = publicUrlData.publicUrl;
+    const uploaded = await uploadAvatar(user.id, avatar);
+    uploadedPath = uploaded.uploadedPath;
+    nextAvatarUrl = uploaded.publicUrl;
   }
 
   const { error } = await supabase
@@ -124,7 +102,7 @@ export async function updateProfileAction(formData: FormData) {
 
   if (error) {
     if (uploadedPath) {
-      await supabase.storage.from("avatar-images").remove([uploadedPath]);
+      await removeAvatar(uploadedPath);
     }
 
     if (
@@ -140,7 +118,7 @@ export async function updateProfileAction(formData: FormData) {
   const oldAvatarPath = extractAvatarPath(currentProfile.avatar_url);
 
   if (uploadedPath && oldAvatarPath) {
-    await supabase.storage.from("avatar-images").remove([oldAvatarPath]);
+    await removeAvatar(oldAvatarPath);
   }
 
   return {

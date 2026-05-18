@@ -6,8 +6,9 @@ import { Theme, ThemePanel } from "@radix-ui/themes";
 import "leaflet/dist/leaflet.css";
 
 import AuthProvider from "@/features/auth/components/auth-provider";
-import PwaRegister from "@/components/pwa-register";
-import PushNotificationManager from "@/features/pwa/components/push-notification-manager";
+import PwaRegister from "@/features/pwa/components/pwa-register";
+
+import PushNotificationDialog from "@/features/pwa/components/push-notification-dialog";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,7 +42,7 @@ export default function RootLayout({
         <AuthProvider>
           <Theme>
             <PwaRegister />
-            <PushNotificationManager />
+            <PushNotificationDialog />
             {children}
             {/* <ThemePanel /> */}
           </Theme>

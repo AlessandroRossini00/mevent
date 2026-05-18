@@ -1,98 +1,107 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import {
-  Badge,
-  Button,
-  Card,
-  Flex,
-  Heading,
-  Inset,
-  Text,
-} from "@radix-ui/themes";
+import { Button, Card, Flex, Inset, Separator, Text } from "@radix-ui/themes";
+import ClickablePreviewBlock from "@/components/ui/clickable-preview-block";
+import EventCardMedia from "@/components/ui/event-card-media";
+import EventLocationBlock from "@/components/ui/event-location-block";
+import EventMetaGrid from "@/components/ui/event-meta-grid";
 import { useEventActions } from "@/features/events/hooks/use-event-actions";
-import { useExploreStore } from "@/features/explore/store/explore";
+import { useExploreFiltersStore } from "@/features/explore/store/explore-filters";
 import type { ExploreEvent } from "@/features/explore/services/types";
 
 type ExploreEventCardProps = {
   event: ExploreEvent;
 };
 
+function getMapsUrl(event: ExploreEvent) {
+  if (event.maps_url) return event.maps_url;
+  if (event.latitude !== null && event.longitude !== null) {
+    return `https://www.google.com/maps?q=${event.latitude},${event.longitude}`;
+  }
+  return null;
+}
+
+function formatPrice(price: number | null | undefined) {
+  if (price === null || price === undefined || price === 0) {
+    return "Gratis";
+  }
+
+  return new Intl.NumberFormat("it-IT", {
+    style: "currency",
+    currency: "EUR",
+  }).format(price);
+}
+
 export default function ExploreEventCard({ event }: ExploreEventCardProps) {
-  const router = useRouter();
   const { joinEvent, isPending, error } = useEventActions();
-  const removeEvent = useExploreStore((state) => state.removeEvent);
+  const hideEvent = useExploreFiltersStore((state) => state.hideEvent);
 
   const cover = event.event_images?.[0]?.image_url ?? null;
   const joinedMembers = event.event_members?.length ?? 0;
+  const mapsUrl = getMapsUrl(event);
+
+  const description = event.description ?? "Nessuna descrizione disponibile.";
+  const locationName = event.location_name ?? "Luogo da definire";
+  const fullAddress = event.address ?? "Indirizzo non disponibile";
+
+  const eventDate = new Date(event.event_at);
+  const formattedDate = eventDate.toLocaleDateString("it-IT");
+  const formattedTime = eventDate.toLocaleTimeString("it-IT", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  const membersLabel =
+    joinedMembers + (event.max_members ? ` / ${event.max_members}` : "");
 
   const handleJoin = async () => {
     const result = await joinEvent(event.id);
 
-    if (result?.type === "joined") {
-      removeEvent(event.id);
-      router.push(`/events/${event.id}`);
-      return;
-    }
-
-    if (result?.type === "request_sent") {
-      removeEvent(event.id);
-      return;
+    if (result.type === "joined") {
+      hideEvent(event.id);
     }
   };
 
   return (
     <Card size="3">
       <Inset clip="padding-box" side="top" pb="current">
-        <div className="aspect-[16/9] w-full overflow-hidden bg-zinc-100">
-          {cover ? (
-            <img
-              src={cover}
-              alt={event.title}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <Flex align="center" justify="center" className="h-full w-full">
-              <Text color="gray">Nessuna immagine</Text>
-            </Flex>
-          )}
-        </div>
+        <EventCardMedia
+          cover={cover}
+          title={event.title}
+          category={event.category}
+          statusBadge={null}
+        />
       </Inset>
 
-      <Flex direction="column" gap="3">
-        <Flex justify="between" align="start" gap="3">
-          <div>
-            <Text size="1" color="gray">
-              {event.category ?? "Evento"}
-            </Text>
-            <Heading size="4">{event.title}</Heading>
-          </div>
+      <Flex direction="column" gap="4">
+        <ClickablePreviewBlock
+          label="Descrizione"
+          preview={description}
+          hint="Tocca per leggere tutto"
+          dialogTitle="Descrizione"
+          dialogContent={<Text>{description}</Text>}
+        />
 
-          <Badge color="gray" variant="soft">
-            {event.visibility}
-          </Badge>
+        <EventMetaGrid
+          date={formattedDate}
+          time={formattedTime}
+          members={membersLabel}
+          price={formatPrice(event.price)}
+        />
+
+        <EventLocationBlock
+          locationName={locationName}
+          fullAddress={fullAddress}
+          mapsUrl={mapsUrl}
+        />
+
+        <Separator size="4" />
+
+        <Flex justify="center">
+          <Button onClick={() => void handleJoin()} loading={isPending}>
+            Partecipa
+          </Button>
         </Flex>
-
-        <Text color="gray">
-          {event.description ?? "Nessuna descrizione disponibile."}
-        </Text>
-
-        <Flex direction="column" gap="1">
-          <Text size="2">
-            {new Date(event.event_at).toLocaleString("it-IT")}
-          </Text>
-          <Text size="2">{event.location_name ?? "Luogo da definire"}</Text>
-          <Text size="2">
-            {joinedMembers}
-            {event.max_members ? ` / ${event.max_members}` : ""} membri
-          </Text>
-        </Flex>
-
-        <Button onClick={() => void handleJoin()} loading={isPending}>
-          {event.approval_mode === "approval_required"
-            ? "Richiedi accesso"
-            : "Partecipa"}
-        </Button>
 
         {error ? <Text color="red">{error}</Text> : null}
       </Flex>

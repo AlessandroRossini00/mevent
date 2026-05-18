@@ -5,6 +5,7 @@ import { Box, Flex, Spinner, Text } from "@radix-ui/themes";
 import EditProfileForm from "@/features/profile/components/edit-profile-form";
 import ProfileInfoCard from "@/features/profile/components/profile-info-card";
 import { useProfile } from "@/features/profile/hooks/use-profile";
+import PushNotificationSettings from "@/features/pwa/components/push-notification-settings";
 
 export default function ProfilePage() {
   const { profile, isLoading, error } = useProfile();
@@ -27,7 +28,15 @@ export default function ProfilePage() {
   }
 
   return (
-    <Flex minHeight="100vh" align="center" justify="center" p="4">
+    <Flex
+      minHeight="100vh"
+      align="center"
+      justify="center"
+      p="4"
+      direction={"column"}
+      gap={"6"}
+    >
+      <PushNotificationSettings />
       <Box className="w-full max-w-[720px]">
         {isEditing ? (
           <EditProfileForm

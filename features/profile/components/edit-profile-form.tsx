@@ -15,6 +15,7 @@ import { PROFILE_LIMITS } from "@/features/profile/services/constants";
 import type { Profile } from "@/features/profile/services/types";
 import FieldBlock from "@/components/ui/field-block";
 import ImagePicker from "@/components/ui/image-picker";
+import { optimizeImage } from "@/lib/utils";
 
 type EditProfileFormProps = {
   profile: Profile;
@@ -52,14 +53,45 @@ export default function EditProfileForm({
   const handleSubmit = (formData: FormData) => {
     setLocalError(null);
 
+    if (!navigator.onLine) {
+      setLocalError("Sei offline. Riconnettiti per salvare le modifiche.");
+      return;
+    }
+
     startTransition(async () => {
       try {
-        await updateProfile(formData);
+        const nextFormData = new FormData();
+
+        for (const [key, value] of formData.entries()) {
+          if (key !== "avatar") {
+            nextFormData.append(key, value);
+          }
+        }
+
+        const avatar = formData.get("avatar") as File | null;
+
+        if (avatar && avatar.size > 0) {
+          const optimizedAvatar = await optimizeImage(avatar);
+          nextFormData.append("avatar", optimizedAvatar, optimizedAvatar.name);
+        }
+
+        await updateProfile(nextFormData);
         onSuccess();
       } catch (err) {
-        setLocalError(
-          err instanceof Error ? err.message : "Errore aggiornamento profilo",
-        );
+        const message =
+          err instanceof Error ? err.message : "Errore aggiornamento profilo";
+
+        if (
+          message.toLowerCase().includes("failed to fetch") ||
+          !navigator.onLine
+        ) {
+          setLocalError(
+            "Sei offline o la connessione non è disponibile. Riprova quando torni online.",
+          );
+          return;
+        }
+
+        setLocalError(message);
       }
     });
   };

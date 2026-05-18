@@ -16,7 +16,6 @@ import {
   type EventCategory,
 } from "@/features/events/services/constants";
 import LocationPickerField from "@/features/events/components/event-form/location-picker-field";
-import EventImagePicker from "@/features/events/components/event-form/event-image-picker";
 import FieldBlock from "@/components/ui/field-block";
 import ImagePicker from "@/components/ui/image-picker";
 

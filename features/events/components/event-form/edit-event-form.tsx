@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import EventForm from "@/features/events/components/event-form/event-form";
 import { useEventActions } from "@/features/events/hooks/use-event-actions";
 import type { EventWithRelations } from "@/features/events/services/types";
+import { optimizeImage } from "@/lib/utils";
 
 type EditEventFormProps = {
   event: EventWithRelations;
@@ -18,20 +19,38 @@ export default function EditEventForm({ event }: EditEventFormProps) {
   const handleSubmit = async (formData: FormData) => {
     setLocalError(null);
 
+    if (!navigator.onLine) {
+      setLocalError("Sei offline. Riconnettiti per salvare le modifiche.");
+      return;
+    }
+
     try {
       const image = formData.get("event_image") as File | null;
+      const optimizedImage =
+        image && image.size > 0 ? await optimizeImage(image) : null;
+
+      if (optimizedImage) {
+        await uploadImage(event.id, optimizedImage);
+      }
 
       await updateEvent(event.id, formData);
 
-      if (image && image.size > 0) {
-        await uploadImage(event.id, image);
+      router.push(`/events`);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Errore modifica evento";
+
+      if (
+        message.toLowerCase().includes("failed to fetch") ||
+        !navigator.onLine
+      ) {
+        setLocalError(
+          "Sei offline o la connessione non è disponibile. Riprova quando torni online.",
+        );
+        return;
       }
 
-      router.push(`/events/${event.id}`);
-    } catch (err) {
-      setLocalError(
-        err instanceof Error ? err.message : "Errore modifica evento",
-      );
+      setLocalError(message);
     }
   };
 

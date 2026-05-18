@@ -45,6 +45,8 @@ npm install -D @types/leaflet
 npm install web-push
 npm i --save-dev @types/web-push
 npx web-push generate-vapid-keys
+npm install browser-image-compression
+npm install @radix-ui/react-slider
 
 ## Description project structure
 
