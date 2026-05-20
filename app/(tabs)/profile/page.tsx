@@ -6,6 +6,7 @@ import EditProfileForm from "@/features/profile/components/edit-profile-form";
 import ProfileInfoCard from "@/features/profile/components/profile-info-card";
 import { useProfile } from "@/features/profile/hooks/use-profile";
 import PushNotificationSettings from "@/features/pwa/components/push-notification-settings";
+import LogoutButton from "@/features/auth/components/logout-button";
 
 export default function ProfilePage() {
   const { profile, isLoading, error } = useProfile();
@@ -51,6 +52,7 @@ export default function ProfilePage() {
           />
         )}
       </Box>
+      <LogoutButton />
     </Flex>
   );
 }

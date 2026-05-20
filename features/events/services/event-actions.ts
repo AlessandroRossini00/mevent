@@ -171,7 +171,6 @@ export async function createEventAction(formData: FormData) {
 
   return { eventId: data.id };
 }
-
 export async function joinEventAction(eventId: string) {
   const supabase = await createClient();
 
@@ -192,6 +191,28 @@ export async function joinEventAction(eventId: string) {
 
   if (!existingMember) {
     await assertUserCanAddEvent(supabase, user.id);
+
+    const { data: event, error: eventError } = await supabase
+      .from("events")
+      .select("id, max_members")
+      .eq("id", eventId)
+      .maybeSingle();
+
+    if (eventError) throw eventError;
+    if (!event) throw new Error("Evento non trovato.");
+
+    if (event.max_members !== null) {
+      const { count, error: countError } = await supabase
+        .from("event_members")
+        .select("*", { count: "exact", head: true })
+        .eq("event_id", eventId);
+
+      if (countError) throw countError;
+
+      if ((count ?? 0) >= event.max_members) {
+        throw new Error("Questo evento è già pieno.");
+      }
+    }
 
     const { error: joinError } = await supabase.from("event_members").insert({
       event_id: eventId,

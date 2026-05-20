@@ -56,14 +56,18 @@ export default function ExploreEventCard({ event }: ExploreEventCardProps) {
   const membersLabel =
     joinedMembers + (event.max_members ? ` / ${event.max_members}` : "");
 
+  const isFull =
+    event.max_members !== null && joinedMembers >= event.max_members;
+
   const handleJoin = async () => {
+    if (isFull) return;
+
     const result = await joinEvent(event.id);
 
     if (result.type === "joined") {
       hideEvent(event.id);
+      router.push("/events");
     }
-
-    router.push(`/events`);
   };
 
   return (
@@ -98,8 +102,12 @@ export default function ExploreEventCard({ event }: ExploreEventCardProps) {
         <Separator size="4" />
 
         <Flex justify="center">
-          <Button onClick={() => void handleJoin()} loading={isPending}>
-            Partecipa
+          <Button
+            onClick={() => void handleJoin()}
+            loading={isPending}
+            disabled={isFull}
+          >
+            {isFull ? "Evento pieno" : "Partecipa"}
           </Button>
         </Flex>
 
