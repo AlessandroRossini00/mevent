@@ -19,8 +19,7 @@ import EventCard from "@/features/events/components/event/event-card";
 import { useCreatedEvents } from "@/features/events/hooks/use-created-events";
 import { useJoinedEvents } from "@/features/events/hooks/use-joined-events";
 import type { EventWithRelations } from "@/features/events/services/types";
-
-const MAX_USER_EVENTS = 20;
+import { MAX_USER_EVENTS } from "../../constants";
 
 type EventsFilter = "all" | "joined" | "created";
 
@@ -126,23 +125,22 @@ export default function EventsDashboard() {
 
   return (
     <Flex direction="column" gap="4">
-      <Card size="3">
-        <Flex
-          justify="between"
-          align="center"
-          gap="4"
-          wrap="wrap"
-          direction={{ initial: "column", sm: "row" }}
+      <div className="sticky top-0 z-30 pb-3">
+        <Card
+          size="3"
+          className="border border-black/5 bg-white/95 shadow-sm backdrop-blur"
         >
-          <Box>
-            <Heading size="6">Eventi</Heading>
-            <Text color="gray">
-              Gestisci i tuoi eventi, partecipa e creane di nuovi.
-            </Text>
-          </Box>
-
-          <Flex align="center" gap="3" wrap="wrap">
-            <Text size="2" color={hasReachedLimit ? "red" : "gray"}>
+          <Flex
+            direction={{ initial: "column", md: "row" }}
+            align={{ initial: "center", md: "center" }}
+            justify="between"
+            gap="3"
+          >
+            <Text
+              size="2"
+              weight="medium"
+              color={hasReachedLimit ? "red" : "gray"}
+            >
               {usedSlots} / {MAX_USER_EVENTS} eventi
             </Text>
 
@@ -162,16 +160,14 @@ export default function EventsDashboard() {
             <Link
               href={hasReachedLimit ? "#" : "/events/new"}
               onClick={(event) => {
-                if (hasReachedLimit) {
-                  event.preventDefault();
-                }
+                if (hasReachedLimit) event.preventDefault();
               }}
             >
               <Button disabled={hasReachedLimit}>Crea evento</Button>
             </Link>
           </Flex>
-        </Flex>
-      </Card>
+        </Card>
+      </div>
 
       {hasReachedLimit ? (
         <Text size="2" color="red">

@@ -7,12 +7,19 @@ export const EVENT_LIMITS = {
 export const MAX_USER_EVENTS = 20;
 
 export const EVENT_CATEGORIES = [
-  "Music",
-  "Sport",
-  "Food",
-  "Tech",
-  "Art",
-  "Nightlife",
+  "music",
+  "sport",
+  "food",
+  "tech",
+  "art",
+  "nightlife",
+  "travel",
+  "wellness",
+  "networking",
+  "games",
+  "community",
+  "outdoor",
+  "other",
 ] as const;
 
 export type EventCategory = (typeof EVENT_CATEGORIES)[number];

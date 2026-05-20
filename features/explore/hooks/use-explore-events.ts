@@ -4,28 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { getExploreEventsQuery } from "@/features/explore/services/explore-queries";
 import { useExploreFiltersStore } from "@/features/explore/store/explore-filters";
 import type { ExploreEvent } from "@/features/explore/services/types";
-
-const PAGE_SIZE = 12;
-const MAX_DISTANCE_CAP = 100;
-
-function toRadians(value: number) {
-  return (value * Math.PI) / 180;
-}
-
-function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
-  const earthRadiusKm = 6371;
-  const dLat = toRadians(lat2 - lat1);
-  const dLon = toRadians(lon2 - lon1);
-
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRadians(lat1)) *
-      Math.cos(toRadians(lat2)) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-
-  return earthRadiusKm * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
-}
+import { PAGE_SIZE } from "../constants";
 
 export function useExploreEvents() {
   const category = useExploreFiltersStore((state) => state.appliedCategory);
@@ -69,25 +48,29 @@ export function useExploreEvents() {
           setError(null);
         }
 
-        const data = await getExploreEventsQuery({
+        const result = await getExploreEventsQuery({
           category,
           dateFrom,
           dateTo,
           minPrice,
           maxPrice,
+          minDistanceKm,
+          maxDistanceKm,
+          userLatitude,
+          userLongitude,
           page: pageToLoad,
           pageSize: PAGE_SIZE,
         });
 
-        setHasMore(data.length === PAGE_SIZE);
+        setHasMore(result.hasMore);
 
         setEvents((current) => {
-          if (!append) return data;
+          if (!append) return result.events;
 
           const map = new Map<string, ExploreEvent>();
 
           for (const item of current) map.set(item.id, item);
-          for (const item of data) map.set(item.id, item);
+          for (const item of result.events) map.set(item.id, item);
 
           return Array.from(map.values());
         });
@@ -104,7 +87,17 @@ export function useExploreEvents() {
         setIsLoadingMore(false);
       }
     },
-    [category, dateFrom, dateTo, minPrice, maxPrice],
+    [
+      category,
+      dateFrom,
+      dateTo,
+      minPrice,
+      maxPrice,
+      minDistanceKm,
+      maxDistanceKm,
+      userLatitude,
+      userLongitude,
+    ],
   );
 
   useEffect(() => {
@@ -119,6 +112,10 @@ export function useExploreEvents() {
     dateTo,
     minPrice,
     maxPrice,
+    minDistanceKm,
+    maxDistanceKm,
+    userLatitude,
+    userLongitude,
     clearHiddenEvents,
     loadPage,
   ]);
@@ -128,49 +125,13 @@ export function useExploreEvents() {
     await loadPage(page + 1, true);
   };
 
-  const filteredEvents = useMemo(() => {
-    let nextEvents = events.filter(
-      (event) => !hiddenEventIds.includes(event.id),
-    );
-
-    const hasDistanceFilter =
-      userLatitude !== null &&
-      userLongitude !== null &&
-      (minDistanceKm > 0 || maxDistanceKm < MAX_DISTANCE_CAP);
-
-    if (hasDistanceFilter) {
-      nextEvents = nextEvents.filter((event) => {
-        if (event.latitude === null || event.longitude === null) {
-          return false;
-        }
-
-        const distance = getDistanceKm(
-          userLatitude!,
-          userLongitude!,
-          event.latitude,
-          event.longitude,
-        );
-
-        const matchesMin = distance >= minDistanceKm;
-        const matchesMax =
-          maxDistanceKm === MAX_DISTANCE_CAP ? true : distance <= maxDistanceKm;
-
-        return matchesMin && matchesMax;
-      });
-    }
-
-    return nextEvents;
-  }, [
-    events,
-    hiddenEventIds,
-    minDistanceKm,
-    maxDistanceKm,
-    userLatitude,
-    userLongitude,
-  ]);
+  const visibleEvents = useMemo(
+    () => events.filter((event) => !hiddenEventIds.includes(event.id)),
+    [events, hiddenEventIds],
+  );
 
   return {
-    events: filteredEvents,
+    events: visibleEvents,
     isLoading,
     isLoadingMore,
     error,

@@ -1,5 +1,5 @@
 "use client";
-
+import Link from "next/link";
 import { useState } from "react";
 import {
   Button,
@@ -14,7 +14,7 @@ import {
   EVENT_CATEGORIES,
   EVENT_LIMITS,
   type EventCategory,
-} from "@/features/events/services/constants";
+} from "../../constants";
 import LocationPickerField from "@/features/events/components/event-form/location-picker-field";
 import FieldBlock from "@/components/ui/field-block";
 import ImagePicker from "@/components/ui/image-picker";
@@ -40,6 +40,7 @@ type EventFormProps = {
   error?: string | null;
   isPending?: boolean;
   defaultValues?: EventFormValues;
+  backHref?: string;
   onSubmit: (formData: FormData) => void | Promise<void>;
 };
 
@@ -73,9 +74,17 @@ export default function EventForm({
         <input type="hidden" name="category" value={categoryValue} />
 
         <Flex direction="column" gap="4">
-          <Text size="4" weight="bold">
-            {title}
-          </Text>
+          <Flex align="center" justify="between" gap="3" wrap="wrap">
+            <Link href="/events">
+              <Button variant="soft">Indietro</Button>
+            </Link>
+
+            <Text size="4" weight="bold">
+              {title}
+            </Text>
+
+            <div className="w-[96px]" aria-hidden="true" />
+          </Flex>
 
           <ImagePicker
             variant="event"

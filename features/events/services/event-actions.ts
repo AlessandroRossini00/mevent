@@ -2,12 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import {
-  EVENT_CATEGORIES,
-  EVENT_LIMITS,
-} from "@/features/events/services/constants";
-
-const MAX_USER_EVENTS = 20;
+import { EVENT_CATEGORIES, EVENT_LIMITS, MAX_USER_EVENTS } from "../constants";
 
 function toNullable(value: FormDataEntryValue | null) {
   const text = String(value ?? "").trim();

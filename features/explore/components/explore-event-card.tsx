@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Button, Card, Flex, Inset, Separator, Text } from "@radix-ui/themes";
 import ClickablePreviewBlock from "@/components/ui/clickable-preview-block";
 import EventCardMedia from "@/components/ui/event-card-media";
@@ -33,6 +34,8 @@ function formatPrice(price: number | null | undefined) {
 }
 
 export default function ExploreEventCard({ event }: ExploreEventCardProps) {
+  const router = useRouter();
+
   const { joinEvent, isPending, error } = useEventActions();
   const hideEvent = useExploreFiltersStore((state) => state.hideEvent);
 
@@ -41,7 +44,6 @@ export default function ExploreEventCard({ event }: ExploreEventCardProps) {
   const mapsUrl = getMapsUrl(event);
 
   const description = event.description ?? "Nessuna descrizione disponibile.";
-  const locationName = event.location_name ?? "Luogo da definire";
   const fullAddress = event.address ?? "Indirizzo non disponibile";
 
   const eventDate = new Date(event.event_at);
@@ -60,6 +62,8 @@ export default function ExploreEventCard({ event }: ExploreEventCardProps) {
     if (result.type === "joined") {
       hideEvent(event.id);
     }
+
+    router.push(`/events`);
   };
 
   return (
@@ -89,11 +93,7 @@ export default function ExploreEventCard({ event }: ExploreEventCardProps) {
           price={formatPrice(event.price)}
         />
 
-        <EventLocationBlock
-          locationName={locationName}
-          fullAddress={fullAddress}
-          mapsUrl={mapsUrl}
-        />
+        <EventLocationBlock fullAddress={fullAddress} mapsUrl={mapsUrl} />
 
         <Separator size="4" />
 

@@ -1,0 +1,19 @@
+const MIN_DISTANCE = 0;
+const MAX_DISTANCE = 99;
+const DISTANCE_STEP = 1;
+
+const MIN_PRICE = 0;
+const MAX_PRICE = 99;
+const PRICE_STEP = 1;
+
+const PAGE_SIZE = 10;
+
+export {
+  MIN_DISTANCE,
+  MAX_DISTANCE,
+  MIN_PRICE,
+  MAX_PRICE,
+  PAGE_SIZE,
+  DISTANCE_STEP,
+  PRICE_STEP,
+};

@@ -2,9 +2,9 @@
 
 import Image from "next/image";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Cross2Icon, ImageIcon } from "@radix-ui/react-icons";
+import { Cross2Icon } from "@radix-ui/react-icons";
 import { useState } from "react";
-import { Box, IconButton, Spinner, Text } from "@radix-ui/themes";
+import { Box, IconButton, Spinner } from "@radix-ui/themes";
 
 type ImagePreviewVariant = "event" | "profile";
 
@@ -19,9 +19,9 @@ type ImagePreviewDialogProps = {
   aspectClassName?: string;
   size?: number;
   overlay?: React.ReactNode;
+  onLoad?: () => void;
 };
 
-// TODO togliere delle cose inutili, controllare const showCloseButton = !src || !isDialogImageLoading;
 export default function ImagePreviewDialog({
   variant = "event",
   src = null,
@@ -33,6 +33,7 @@ export default function ImagePreviewDialog({
   aspectClassName = "aspect-[16/10]",
   size = 96,
   overlay,
+  onLoad,
 }: ImagePreviewDialogProps) {
   const [open, setOpen] = useState(false);
   const [isDialogImageLoading, setIsDialogImageLoading] = useState(
@@ -44,7 +45,7 @@ export default function ImagePreviewDialog({
   const outerClassName = isProfile ? "relative inline-block p-2" : "relative";
   const containerClassName = isProfile
     ? "relative overflow-hidden rounded-full border border-black/8 bg-black/[0.02]"
-    : "relative overflow-hidden rounded-xl border border-black/8 bg-black/[0.02]";
+    : "relative overflow-hidden border border-black/8 bg-black/[0.02]";
 
   const triggerClassName = isProfile
     ? "relative block h-full w-full overflow-hidden rounded-full"
@@ -58,16 +59,7 @@ export default function ImagePreviewDialog({
     ? "object-cover rounded-full"
     : "object-cover";
 
-  const fallbackNode = isProfile ? (
-    <Box className="absolute inset-0 bg-zinc-100">
-      <Image
-        src="/placeholder.png"
-        alt=""
-        fill
-        className="object-contain p-6 opacity-70"
-      />
-    </Box>
-  ) : (
+  const fallbackNode = (
     <Box className="absolute inset-0 bg-zinc-100">
       <Image
         src="/placeholder.png"
@@ -101,7 +93,7 @@ export default function ImagePreviewDialog({
                   fill
                   className={imageClassName}
                   sizes={isProfile ? `${size}px` : sizes}
-                  unoptimized
+                  onLoad={onLoad}
                 />
               ) : (
                 fallbackNode
@@ -113,8 +105,8 @@ export default function ImagePreviewDialog({
         {overlay ? (
           <Box
             position="absolute"
-            right={isProfile ? "12px" : "12px"}
-            bottom={isProfile ? "12px" : "12px"}
+            right="12px"
+            bottom="12px"
             style={{ zIndex: 20 }}
           >
             {overlay}

@@ -9,6 +9,7 @@ type EventChatPageProps = {
   }>;
 };
 
+//TODO sistemare lo stile
 export default async function EventChatPage({ params }: EventChatPageProps) {
   const { id } = await params;
 
@@ -18,16 +19,6 @@ export default async function EventChatPage({ params }: EventChatPageProps) {
     <Box p="4">
       <Box className="mx-auto w-full max-w-[960px]">
         <Flex direction="column" gap="4">
-          <Flex gap="2" wrap="wrap">
-            <Link href="/events">
-              <Button variant="soft">Torna a Events</Button>
-            </Link>
-
-            <Link href={`/events/${id}`}>
-              <Button variant="soft">Apri evento</Button>
-            </Link>
-          </Flex>
-
           <EventChatPanel eventId={id} />
         </Flex>
       </Box>

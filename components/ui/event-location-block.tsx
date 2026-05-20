@@ -5,13 +5,11 @@ import { Box, Button, Flex, Text } from "@radix-ui/themes";
 import ClickablePreviewBlock from "@/components/ui/clickable-preview-block";
 
 type EventLocationBlockProps = {
-  locationName: string;
   fullAddress: string;
   mapsUrl: string | null;
 };
 
 export default function EventLocationBlock({
-  locationName,
   fullAddress,
   mapsUrl,
 }: EventLocationBlockProps) {
@@ -20,12 +18,11 @@ export default function EventLocationBlock({
       <Flex direction="column" gap="3">
         <ClickablePreviewBlock
           label="Luogo"
-          preview={locationName}
+          preview={fullAddress}
           hint="Tocca per vedere tutto"
           dialogTitle="Luogo"
           dialogContent={
             <Flex direction="column" gap="2">
-              <Text weight="medium">{locationName}</Text>
               <Text color="gray">{fullAddress}</Text>
             </Flex>
           }

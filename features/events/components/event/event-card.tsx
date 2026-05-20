@@ -59,7 +59,6 @@ export default function EventCard({
   const mapsUrl = getMapsUrl(event);
 
   const description = event.description ?? "Nessuna descrizione disponibile.";
-  const locationName = event.location_name ?? "Luogo da definire";
   const fullAddress = event.address ?? "Indirizzo non disponibile";
 
   const eventDate = new Date(event.event_at);
@@ -104,11 +103,7 @@ export default function EventCard({
           price={formatPrice(event.price)}
         />
 
-        <EventLocationBlock
-          locationName={locationName}
-          fullAddress={fullAddress}
-          mapsUrl={mapsUrl}
-        />
+        <EventLocationBlock fullAddress={fullAddress} mapsUrl={mapsUrl} />
 
         <Separator size="4" />
 

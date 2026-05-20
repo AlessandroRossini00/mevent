@@ -1,6 +1,10 @@
 "use client";
 
 import { create } from "zustand";
+import {
+  MIN_DISTANCE as DEFAULT_MIN_DISTANCE,
+  MAX_DISTANCE as DEFAULT_MAX_DISTANCE,
+} from "../constants";
 
 type ExploreFiltersState = {
   category: string;
@@ -33,7 +37,7 @@ type ExploreFiltersState = {
   setMinPrice: (value: string) => void;
   setMaxPrice: (value: string) => void;
   setDistanceRange: (value: [number, number]) => void;
-  setUserLocation: (latitude: number, longitude: number) => void;
+  setUserLocation: (latitude: number | null, longitude: number | null) => void;
   setIsLocating: (value: boolean) => void;
   setLocationError: (value: string | null) => void;
   requestUserLocation: () => void;
@@ -42,9 +46,6 @@ type ExploreFiltersState = {
   resetFilters: () => void;
   clearHiddenEvents: () => void;
 };
-
-const DEFAULT_MIN_DISTANCE = 0;
-const DEFAULT_MAX_DISTANCE = 100;
 
 export const useExploreFiltersStore = create<ExploreFiltersState>(
   (set, get) => ({
@@ -135,6 +136,19 @@ export const useExploreFiltersStore = create<ExploreFiltersState>(
 
     applyFilters: () => {
       const state = get();
+      const hasCustomDistance =
+        state.minDistanceKm > DEFAULT_MIN_DISTANCE ||
+        state.maxDistanceKm < DEFAULT_MAX_DISTANCE;
+
+      if (
+        hasCustomDistance &&
+        (state.userLatitude === null || state.userLongitude === null)
+      ) {
+        set({
+          locationError:
+            "Per filtrare per distanza, prima attiva la posizione.",
+        });
+      }
 
       set({
         appliedCategory: state.category,
