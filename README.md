@@ -92,13 +92,15 @@ npm run seed:explore
 
 ## Descrizione della struttura del progetto
 
-La cartella [components] contiene le varie componenti riusabili in piu zone.
+La cartella `components` contiene le varie componenti riusabili in piu zone.
 
-La cartella [(stack)] contiene i vari stack, () serve solo per raggruppare cartelle e non viene inserito nel path.
+La cartella `(stack)` contiene i vari stack, () serve solo per raggruppare cartelle e non viene inserito nel path.
 
-La cartella [(tabs)] contiene i vari tab, () serve solo per raggruppare cartelle e non viene inserito nel path.
+La cartella `(tabs)` contiene i vari tab, () serve solo per raggruppare cartelle e non viene inserito nel path.
 
-Ho divisto [(stack)] e [(tabs)] per chiarezza e per rimuovere la tab di navigazione quando si usa stack.
+Ho divisto `(stack)` e `(tabs)` per chiarezza e per rimuovere la tab di navigazione quando si usa stack.
+
+La cartella `lib/supabase` contiene tutto il setup per supabase.
 
 La cartella `features` organizza il codice per dominio funzionale.  
 Ogni feature raccoglie al suo interno tutto ciò che serve per gestire una specifica area dell’applicazione.
@@ -118,12 +120,6 @@ Le principali feature del progetto sono:
 - `features/explore`: gestisce la sezione di esplorazione degli eventi con i vari filtri;
 - `features/profile`: gestisce il profilo utente;
 - `features/pwa`: gestisce gli aspetti Progressive Web App, come service worker, registrazione PWA e notifiche push.
-
-La cartella [lib/supabase] contiene tutto il setup per supabase.
-
-## Utenti di prova credenziali
-
-Nella cartella [scripts] c'è lo script che crea utenti [seed-explore-users-and-events.mjs] e vari dati degli utenti [explore-seed-data.mj].
 
 ## Descrizione del flow dell'app
 
