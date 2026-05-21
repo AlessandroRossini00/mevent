@@ -30,9 +30,16 @@ export async function login(
 }
 
 export async function loginWithGoogle(): Promise<never> {
-  console.log("GOOGLE");
   const supabase = await createClient();
-  const origin = (await headers()).get("origin") ?? "http://192.168.1.44:3000";
+
+  const requestOrigin = (await headers()).get("origin");
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+
+  const origin = requestOrigin ?? appUrl;
+
+  if (!origin) {
+    redirect("/login?message=URL applicazione non configurato.");
+  }
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
@@ -41,13 +48,19 @@ export async function loginWithGoogle(): Promise<never> {
     },
   });
 
-  if (error) redirect(`/login?message=${encodeURIComponent(error.message)}`);
-  if (!data.url) redirect("/login?message=Impossibile avviare login Google.");
+  if (error) {
+    redirect(`/login?message=${encodeURIComponent(error.message)}`);
+  }
+
+  if (!data.url) {
+    redirect("/login?message=Impossibile avviare login Google.");
+  }
 
   console.log(data.url);
   // Redirect verso Google
   // Quando finisce, Google torna a Supabase (...supabase.co/auth/v1/callback).
   // Supabase reindirizza a http://localhost:3000/api/auth/callback?code=...&next=/explore.
+
   redirect(data.url);
 }
 
