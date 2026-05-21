@@ -15,7 +15,11 @@ import {
 
 const LocationPickerMap = dynamic(
   () => import("@/features/events/components/event-form/location-picker-map"),
-  { ssr: false },
+  {
+    // La mappa dipende da API browser/Leaflet,
+    // quindi la carichiamo solo lato client.
+    ssr: false,
+  },
 );
 
 type SearchHit = {
@@ -86,6 +90,8 @@ export default function LocationPickerField({
       : null,
   );
 
+  // La mappa mostra sempre un punto sensato:
+  // la posizione selezionata se esiste, altrimenti il centro iniziale di fallback.
   const mapLat = selected?.latitude ?? initialLat;
   const mapLon = selected?.longitude ?? initialLon;
 
@@ -123,6 +129,8 @@ export default function LocationPickerField({
         `https://www.google.com/maps?q=${parsedLat},${parsedLon}`,
     };
 
+    // Anche quando partiamo da una ricerca testuale, facciamo reverse geocoding
+    // per ottenere un formato coerente e completo dei dati posizione.
     setSelected(nextSelected);
     setResults([]);
 
@@ -138,6 +146,8 @@ export default function LocationPickerField({
           Luogo evento
         </Text>
 
+        {/* I valori reali del luogo selezionato vengono inviati nel form
+            tramite hidden inputs, mentre la UI mostra solo ricerca e mappa. */}
         <input
           type="hidden"
           name="location_name"

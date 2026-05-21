@@ -42,6 +42,8 @@ export default function ImagePreviewDialog({
 
   const isProfile = variant === "profile";
 
+  // La stessa componente supporta due layout:
+  // preview rettangolare per eventi e preview circolare per avatar profilo.
   const outerClassName = isProfile ? "relative inline-block p-2" : "relative";
   const containerClassName = isProfile
     ? "relative overflow-hidden rounded-full border border-black/8 bg-black/[0.02]"
@@ -70,6 +72,8 @@ export default function ImagePreviewDialog({
     </Box>
   );
 
+  // Il bottone chiudi compare solo quando l'immagine del dialog è pronta
+  // oppure quando non esiste alcuna immagine da mostrare.
   const showCloseButton = !src || !isDialogImageLoading;
 
   return (
@@ -77,6 +81,9 @@ export default function ImagePreviewDialog({
       open={open}
       onOpenChange={(nextOpen) => {
         setOpen(nextOpen);
+
+        // Ogni volta che il dialog si apre resettiamo lo stato loading
+        // dell'immagine fullscreen, così lo spinner resta coerente anche su riaperture.
         if (nextOpen) {
           setIsDialogImageLoading(Boolean(src));
         }
@@ -93,6 +100,8 @@ export default function ImagePreviewDialog({
                   fill
                   className={imageClassName}
                   sizes={isProfile ? `${size}px` : sizes}
+                  // onLoad viene esposto al parent per gestire eventuali spinner
+                  // o stato esterno sulla preview inline.
                   onLoad={onLoad}
                 />
               ) : (

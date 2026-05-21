@@ -44,6 +44,8 @@ export default function EditProfileForm({
 
   useEffect(() => {
     return () => {
+      // Se abbiamo creato un'anteprima locale del file,
+      // la rilasciamo quando il form si smonta per evitare memory leak.
       if (objectUrlRef.current) {
         URL.revokeObjectURL(objectUrlRef.current);
       }
@@ -53,6 +55,8 @@ export default function EditProfileForm({
   const handleSubmit = (formData: FormData) => {
     setLocalError(null);
 
+    // Blocchiamo subito il submit se il device è offline,
+    // così evitiamo una richiesta destinata a fallire.
     if (!navigator.onLine) {
       setLocalError("Sei offline. Riconnettiti per salvare le modifiche.");
       return;
@@ -62,6 +66,8 @@ export default function EditProfileForm({
       try {
         const nextFormData = new FormData();
 
+        // Copiamo manualmente i campi diversi da avatar perché,
+        // se presente un nuovo file, vogliamo sostituirlo con la versione ottimizzata.
         for (const [key, value] of formData.entries()) {
           if (key !== "avatar") {
             nextFormData.append(key, value);
@@ -71,6 +77,8 @@ export default function EditProfileForm({
         const avatar = formData.get("avatar") as File | null;
 
         if (avatar && avatar.size > 0) {
+          // L'immagine viene compressa lato client prima dell'upload
+          // per ridurre peso del file e tempo di caricamento.
           const optimizedAvatar = await optimizeImage(avatar);
           nextFormData.append("avatar", optimizedAvatar, optimizedAvatar.name);
         }
@@ -81,6 +89,8 @@ export default function EditProfileForm({
         const message =
           err instanceof Error ? err.message : "Errore aggiornamento profilo";
 
+        // Intercettiamo in modo esplicito gli errori di rete/offline
+        // per mostrare un messaggio più utile dell'errore tecnico originale.
         if (
           message.toLowerCase().includes("failed to fetch") ||
           !navigator.onLine
@@ -115,6 +125,8 @@ export default function EditProfileForm({
             dialogTitle="Anteprima foto profilo"
             helperText="Tocca la foto per l'anteprima o la matita per cambiarla"
             onFileChange={(file) => {
+              // Aggiorniamo subito la preview locale per dare feedback immediato
+              // all'utente prima ancora del salvataggio sul server.
               setPreviewUrl(URL.createObjectURL(file));
             }}
           />

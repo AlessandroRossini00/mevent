@@ -49,6 +49,8 @@ type ExploreFiltersState = {
 
 export const useExploreFiltersStore = create<ExploreFiltersState>(
   (set, get) => ({
+    // Stato "in editing": riflette quello che l'utente sta selezionando nella UI
+    // prima di confermare con applyFilters.
     category: "all",
     dateFrom: "",
     dateTo: "",
@@ -59,6 +61,9 @@ export const useExploreFiltersStore = create<ExploreFiltersState>(
     userLatitude: null,
     userLongitude: null,
 
+    // Stato "applicato": è la fotografia dei filtri realmente usati
+    // dalla query explore, così l'utente può modificare i controlli
+    // senza rilanciare subito il caricamento dati.
     appliedCategory: "all",
     appliedDateFrom: "",
     appliedDateTo: "",
@@ -71,6 +76,9 @@ export const useExploreFiltersStore = create<ExploreFiltersState>(
 
     isLocating: false,
     locationError: null,
+
+    // Gli eventi nascosti servono a rimuovere subito dalla lista elementi
+    // già gestiti lato UI, ad esempio dopo un join riuscito.
     hiddenEventIds: [],
 
     setCategory: (category) => set({ category }),
@@ -140,6 +148,9 @@ export const useExploreFiltersStore = create<ExploreFiltersState>(
         state.minDistanceKm > DEFAULT_MIN_DISTANCE ||
         state.maxDistanceKm < DEFAULT_MAX_DISTANCE;
 
+      // Se l'utente imposta un filtro distanza senza coordinate disponibili,
+      // manteniamo il messaggio di errore ma applichiamo comunque lo snapshot
+      // corrente dei filtri per lasciare la UI coerente con l'azione dell'utente.
       if (
         hasCustomDistance &&
         (state.userLatitude === null || state.userLongitude === null)
@@ -171,6 +182,8 @@ export const useExploreFiltersStore = create<ExploreFiltersState>(
       })),
 
     resetFilters: () =>
+      // Resettiamo sia i filtri in editing sia quelli già applicati,
+      // così UI e query tornano allo stesso stato iniziale.
       set({
         category: "all",
         dateFrom: "",

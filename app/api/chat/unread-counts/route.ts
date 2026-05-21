@@ -8,6 +8,8 @@ export async function POST(req: Request) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // I conteggi unread dipendono dall'utente corrente,
+  // quindi l'endpoint è accessibile solo con sessione valida.
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -27,6 +29,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // La RPC restituisce una lista di righe; qui la convertiamo
+  // in una mappa { [eventId]: unreadCount } più comoda da usare nel client.
   const result = Object.fromEntries(
     (data ?? []).map((row: { event_id: string; unread_count: number }) => [
       row.event_id,

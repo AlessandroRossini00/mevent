@@ -8,7 +8,6 @@ import {
   Card,
   Flex,
   Grid,
-  Heading,
   SegmentedControl,
   Spinner,
   Text,
@@ -34,6 +33,8 @@ function getEventSortTimestamp(item: DashboardEvent) {
 }
 
 function sortDashboardEvents(a: DashboardEvent, b: DashboardEvent) {
+  // In dashboard mostriamo prima gli eventi joined e poi quelli creati,
+  // mantenendo all'interno di ogni gruppo l'ordinamento dal più recente.
   if (a.isCreated !== b.isCreated) {
     return a.isCreated ? 1 : -1;
   }
@@ -63,6 +64,8 @@ export default function EventsDashboard() {
   const usedSlots = useMemo(() => {
     const ids = new Set<string>();
 
+    // Usiamo un Set per contare ogni evento una sola volta,
+    // anche se un evento creato compare anche nel contesto joined/admin.
     for (const event of joinedEvents) ids.add(event.id);
     for (const event of createdEvents) ids.add(event.id);
 
@@ -76,6 +79,8 @@ export default function EventsDashboard() {
     const map = new Map<string, DashboardEvent>();
 
     for (const event of joinedEvents) {
+      // Se l'utente è creator non vogliamo mostrare lo stesso evento
+      // come semplice "joined": verrà gestito nel gruppo created.
       if (event.creator_id === userId) continue;
 
       map.set(event.id, {
@@ -97,6 +102,8 @@ export default function EventsDashboard() {
   }, [joinedEvents, createdEvents, user?.id]);
 
   const visibleEventIds = useMemo(() => {
+    // Il filtro agisce sugli id visibili, lasciando invariata la collezione base
+    // già ordinata e deduplicata della dashboard.
     if (filter === "joined") {
       return new Set(
         allEvents
@@ -121,6 +128,8 @@ export default function EventsDashboard() {
     [allEvents],
   );
 
+  // Recuperiamo i contatori unread in un unico punto per tutte le card
+  // della dashboard, evitando che ogni card debba fare la propria query.
   const { counts: unreadCounts } = useEventUnreadCounts(eventIds);
 
   return (
@@ -160,6 +169,8 @@ export default function EventsDashboard() {
             <Link
               href={hasReachedLimit ? "#" : "/events/new"}
               onClick={(event) => {
+                // Se il limite è già stato raggiunto blocchiamo la navigazione
+                // verso la creazione, mantenendo coerente il vincolo lato UI.
                 if (hasReachedLimit) event.preventDefault();
               }}
             >

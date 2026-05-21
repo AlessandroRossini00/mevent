@@ -21,15 +21,23 @@ export function useJoinedEvent(eventId: string) {
       try {
         setLoadingCurrentEvent(true);
         setError(null);
+
         const data = await getEventByIdQuery(eventId);
+
+        // Se il componente non è più attivo ignoriamo la risposta,
+        // così evitiamo aggiornamenti tardivi dello store.
         if (!active) return;
+
         setCurrentEvent(data);
       } catch (err) {
         if (!active) return;
+
         setError(
           err instanceof Error ? err.message : "Errore caricamento evento",
         );
       } finally {
+        // Anche il loading viene aggiornato solo se questo effect
+        // è ancora valido al termine della richiesta.
         if (active) setLoadingCurrentEvent(false);
       }
     };
@@ -37,6 +45,8 @@ export function useJoinedEvent(eventId: string) {
     void run();
 
     return () => {
+      // Segniamo l'effect come inattivo per ignorare eventuali risposte
+      // che arrivano dopo l'unmount o dopo un cambio di eventId.
       active = false;
     };
   }, [eventId, setCurrentEvent, setLoadingCurrentEvent, setError]);

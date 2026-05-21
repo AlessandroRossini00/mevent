@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 function getUserAgent() {
+  // Nominatim richiede un User-Agent identificabile per l'uso delle API.
   return (
     process.env.OSM_USER_AGENT ?? "mevent/0.1 (dev; contact: dev@localhost)"
   );
@@ -40,6 +41,9 @@ export async function GET(req: Request) {
   const data = await res.json();
   const address = data?.address ?? {};
 
+  // Cerchiamo un nome "umano" del luogo con una catena di fallback:
+  // se Nominatim non restituisce un name chiaro, proviamo vari campi address
+  // fino ad arrivare al display_name completo.
   const locationName =
     data?.name ??
     address.attraction ??
@@ -58,6 +62,9 @@ export async function GET(req: Request) {
     address: data?.display_name ?? null,
     latitude: Number(data?.lat ?? lat),
     longitude: Number(data?.lon ?? lon),
+
+    // Restituiamo anche una URL pronta per Google Maps,
+    // così il client non deve ricostruirla ogni volta.
     maps_url: `https://www.google.com/maps?q=${data?.lat ?? lat},${data?.lon ?? lon}`,
   });
 }

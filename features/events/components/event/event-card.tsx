@@ -27,9 +27,13 @@ type EventCardProps = {
 
 function getMapsUrl(event: EventWithRelations) {
   if (event.maps_url) return event.maps_url;
+
+  // Se non è già presente un link salvato, costruiamo un fallback
+  // usando direttamente le coordinate dell'evento.
   if (event.latitude !== null && event.longitude !== null) {
     return `https://www.google.com/maps?q=${event.latitude},${event.longitude}`;
   }
+
   return null;
 }
 
@@ -55,6 +59,9 @@ export default function EventCard({
 
   const cover = event.event_images?.[0]?.image_url ?? null;
   const joinedMembers = event.event_members?.length ?? 0;
+
+  // Consideriamo creator sia chi arriva da una lista "created"
+  // sia l'utente autenticato che coincide con creator_id.
   const isCreator = isCreated || user?.id === event.creator_id;
   const mapsUrl = getMapsUrl(event);
 
@@ -68,6 +75,7 @@ export default function EventCard({
     minute: "2-digit",
   });
 
+  // Il badge di stato comunica subito il ruolo dell'utente rispetto all'evento.
   const statusBadge = isCreator
     ? { label: "Creato da te", color: "jade" as const }
     : isJoined
@@ -121,6 +129,7 @@ export default function EventCard({
                 radius="full"
                 className="absolute -right-3 -top-3 z-10"
               >
+                {/* Limitiamo il badge per evitare numeri troppo lunghi nella UI */}
                 {unreadCount > 99 ? "99+" : unreadCount}
               </Badge>
             ) : null}
@@ -143,6 +152,7 @@ export default function EventCard({
                 onClick={() => void deleteEvent(event.id)}
                 loading={isPending}
               >
+                {/* Il creator può modificare o eliminare l'evento */}
                 Elimina
               </Button>
             </>
@@ -153,6 +163,7 @@ export default function EventCard({
               onClick={() => void leaveEvent(event.id)}
               loading={isPending}
             >
+              {/* Un partecipante non creator può solo uscire dall'evento */}
               Esci
             </Button>
           )}

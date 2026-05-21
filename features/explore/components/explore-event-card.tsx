@@ -16,9 +16,13 @@ type ExploreEventCardProps = {
 
 function getMapsUrl(event: ExploreEvent) {
   if (event.maps_url) return event.maps_url;
+
+  // Se non esiste un link già salvato, costruiamo un fallback
+  // usando direttamente le coordinate dell'evento.
   if (event.latitude !== null && event.longitude !== null) {
     return `https://www.google.com/maps?q=${event.latitude},${event.longitude}`;
   }
+
   return null;
 }
 
@@ -56,6 +60,8 @@ export default function ExploreEventCard({ event }: ExploreEventCardProps) {
   const membersLabel =
     joinedMembers + (event.max_members ? ` / ${event.max_members}` : "");
 
+  // Se i membri correnti hanno raggiunto il limite massimo,
+  // blocchiamo la partecipazione già lato UI.
   const isFull =
     event.max_members !== null && joinedMembers >= event.max_members;
 
@@ -65,6 +71,8 @@ export default function ExploreEventCard({ event }: ExploreEventCardProps) {
     const result = await joinEvent(event.id);
 
     if (result.type === "joined") {
+      // Dopo il join togliamo subito l'evento dall'explore locale
+      // e portiamo l'utente nella sezione dei propri eventi.
       hideEvent(event.id);
       router.push("/events");
     }

@@ -20,6 +20,9 @@ export function useJoinedEventActions() {
 
     try {
       await leaveJoinedEventAction(eventId);
+
+      // Dopo l'uscita rimuoviamo subito l'evento dalla lista locale
+      // per mantenere la UI allineata senza attendere un refetch.
       removeJoinedEvent(eventId);
     } catch (err) {
       const message =
@@ -37,6 +40,9 @@ export function useJoinedEventActions() {
 
     try {
       await deleteEventAction(eventId);
+
+      // L'eliminazione può toccare sia le liste joined sia created,
+      // quindi usiamo il reset più ampio sullo store eventi.
       removeEvent(eventId);
     } catch (err) {
       const message =

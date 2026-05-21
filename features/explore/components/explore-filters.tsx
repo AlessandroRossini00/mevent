@@ -66,6 +66,8 @@ function RangeSlider({
             key={index}
             className="block h-5 w-5 rounded-full border border-black/10 bg-white shadow outline-none"
           >
+            {/* Ogni thumb mostra il proprio valore corrente direttamente sopra,
+                così l'utente capisce subito il range selezionato senza leggere altrove. */}
             <Text
               size="1"
               weight="medium"
@@ -139,6 +141,9 @@ export default function ExploreFilters() {
                 <Switch
                   checked={isLocationEnabled}
                   onCheckedChange={(checked) => {
+                    // Lo switch non cambia solo un flag UI:
+                    // quando viene attivato prova a ottenere davvero la posizione utente,
+                    // quando viene spento rimuove coordinate ed eventuali errori associati.
                     if (checked) {
                       void requestUserLocation();
                       return;
@@ -157,6 +162,8 @@ export default function ExploreFilters() {
                 color="gray"
                 onClick={() => setIsExpanded((prev) => !prev)}
               >
+                {/* Manteniamo il pannello compatto di default per occupare meno spazio,
+                    mostrando i filtri avanzati solo quando servono davvero. */}
                 {isExpanded ? "Restringi filtri" : "Espandi filtri"}
               </Button>
 
@@ -170,6 +177,8 @@ export default function ExploreFilters() {
 
           <div className="overflow-x-auto">
             <Flex gap="2" wrap="nowrap" className="min-w-max">
+              {/* Le categorie scorrono orizzontalmente per evitare una select lunga
+                  e mantenere la barra filtri più veloce da usare soprattutto su mobile. */}
               {["all", ...EVENT_CATEGORIES].map((item) => {
                 const isActive = category === item;
 

@@ -1,4 +1,5 @@
 "use client";
+
 import Link from "next/link";
 import { useState } from "react";
 import {
@@ -71,6 +72,8 @@ export default function EventForm({
   return (
     <Card size="4">
       <form action={onSubmit}>
+        {/* La categoria è gestita tramite Select controllata,
+            quindi la reinseriamo nel submit con un campo hidden. */}
         <input type="hidden" name="category" value={categoryValue} />
 
         <Flex direction="column" gap="4">
@@ -83,6 +86,8 @@ export default function EventForm({
               {title}
             </Text>
 
+            {/* Spacer visivo per mantenere il titolo più centrato
+                rispetto al bottone "Indietro". */}
             <div className="w-[96px]" aria-hidden="true" />
           </Flex>
 

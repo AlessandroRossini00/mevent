@@ -21,11 +21,14 @@ export default function EventImagePicker({
   const [previewSrc, setPreviewSrc] = useState<string | null>(defaultUrl);
 
   useEffect(() => {
+    // Se cambia l'immagine iniziale dall'esterno, riallineiamo anche la preview locale.
     setPreviewSrc(defaultUrl);
   }, [defaultUrl]);
 
   useEffect(() => {
     return () => {
+      // Le preview create con URL.createObjectURL vanno liberate quando
+      // il componente si smonta per evitare memory leak nel browser.
       if (objectUrlRef.current) {
         URL.revokeObjectURL(objectUrlRef.current);
       }
@@ -40,6 +43,8 @@ export default function EventImagePicker({
     const objectUrl = URL.createObjectURL(file);
     objectUrlRef.current = objectUrl;
 
+    // Mostriamo subito la preview locale del nuovo file selezionato
+    // senza dover attendere upload o salvataggio sul server.
     setPreviewSrc(objectUrl);
     onFileChange?.(file);
   };
@@ -71,6 +76,9 @@ export default function EventImagePicker({
             type="button"
             radius="full"
             onClick={(event) => {
+              // La matita vive sopra il trigger dell'anteprima:
+              // blocchiamo quindi apertura dialog e click bubbling
+              // per aprire invece il file picker.
               event.preventDefault();
               event.stopPropagation();
               inputRef.current?.click();

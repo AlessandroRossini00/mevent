@@ -17,6 +17,8 @@ export function useChatActions(eventId: string) {
       const message = await sendEventMessage(eventId, body);
 
       startTransition(() => {
+        // Dopo il salvataggio server aggiungiamo subito il messaggio
+        // alla chat locale per aggiornare la UI senza attendere un refetch completo.
         addMessage(eventId, message);
       });
 

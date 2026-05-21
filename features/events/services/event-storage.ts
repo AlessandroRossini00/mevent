@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/client";
 import type { EventImage } from "@/features/events/services/types";
 
 function getEventImagePath(eventId: string) {
+  // Usiamo un path stabile per la cover dell'evento,
+  // così ogni nuovo upload sostituisce la precedente.
   return `${eventId}/cover`;
 }
 
@@ -14,7 +16,8 @@ export async function uploadEventImage(eventId: string, file: File) {
     .remove([path]);
 
   if (removeError) {
-    // non bloccare se il file non esiste già
+    // La rimozione preventiva serve a pulire eventuali file precedenti.
+    // Se però il file non esiste già non blocchiamo il flusso di upload.
     console.warn("Storage remove warning:", removeError.message);
   }
 
@@ -32,6 +35,9 @@ export async function uploadEventImage(eventId: string, file: File) {
 
   return {
     path,
+
+    // Aggiungiamo un timestamp alla URL pubblica per forzare il refresh
+    // della cache quando la cover viene sostituita.
     imageUrl: `${data.publicUrl}?t=${Date.now()}`,
   };
 }
@@ -60,5 +66,7 @@ export async function saveEventImageRecord(
 
   if (error) throw error;
 
+  // Manteniamo un solo record immagine per evento:
+  // prima cancelliamo quello esistente, poi salviamo quello nuovo.
   return data as EventImage;
 }

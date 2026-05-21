@@ -19,6 +19,8 @@ export function useProfileActions() {
       const result = await updateProfileAction(formData);
 
       if (profile) {
+        // Dopo il salvataggio aggiorniamo subito lo store locale
+        // per riflettere i nuovi dati in UI senza attendere un refetch completo.
         setProfile({
           ...profile,
           username: String(formData.get("username") ?? "").trim() || null,
@@ -34,6 +36,9 @@ export function useProfileActions() {
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Errore aggiornamento profilo";
+
+      // Manteniamo l'errore nello hook per mostrarlo direttamente
+      // nei componenti che usano questa action.
       setActionError(message);
       throw err;
     } finally {

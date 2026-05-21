@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { EVENT_CATEGORIES, EVENT_LIMITS, MAX_USER_EVENTS } from "../constants";
 
 function toNullable(value: FormDataEntryValue | null) {
+  // I campi testuali opzionali vuoti vengono convertiti in null
+  // per mantenere il dato più pulito e coerente nel database.
   const text = String(value ?? "").trim();
   return text || null;
 }
@@ -37,6 +39,8 @@ async function assertUserCanAddEvent(
 ) {
   const count = await getUserEventsCount(supabase, userId);
 
+  // Il limite si applica al numero totale di eventi in cui l'utente è presente,
+  // sia come creator sia come partecipante.
   if (count >= MAX_USER_EVENTS) {
     throw new Error(
       `Hai raggiunto il limite massimo di ${MAX_USER_EVENTS} eventi.`,
@@ -45,6 +49,8 @@ async function assertUserCanAddEvent(
 }
 
 function validateEventInput(formData: FormData) {
+  // Centralizziamo qui tutta la lettura e validazione del form,
+  // così create e update condividono le stesse regole di dominio.
   const title = String(formData.get("title") ?? "").trim();
   const description = toNullable(formData.get("description"));
   const category = String(formData.get("category") ?? "").trim();
@@ -106,6 +112,8 @@ function validateEventInput(formData: FormData) {
     throw new Error("Il prezzo non può essere negativo.");
   }
 
+  // Se abbiamo coordinate valide, il link mappa viene rigenerato da quelle
+  // per evitare disallineamenti tra URL e posizione reale.
   const mapsUrl =
     latitude !== null && longitude !== null
       ? `https://www.google.com/maps?q=${latitude},${longitude}`
@@ -133,6 +141,7 @@ export async function createEventAction(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Solo utenti autenticati possono creare eventi.
   if (!user) redirect("/login");
 
   await assertUserCanAddEvent(supabase, user.id);
@@ -162,6 +171,8 @@ export async function createEventAction(formData: FormData) {
   if (error) throw error;
 
   const { error: memberError } = await supabase.from("event_members").insert({
+    // Dopo la creazione aggiungiamo subito il creator come admin dell'evento,
+    // così membership e ownership restano allineate.
     event_id: data.id,
     user_id: user.id,
     role: "admin",
@@ -171,6 +182,7 @@ export async function createEventAction(formData: FormData) {
 
   return { eventId: data.id };
 }
+
 export async function joinEventAction(eventId: string) {
   const supabase = await createClient();
 
@@ -209,6 +221,7 @@ export async function joinEventAction(eventId: string) {
 
       if (countError) throw countError;
 
+      // Blocchiamo il join se l'evento ha già raggiunto la capienza massima.
       if ((count ?? 0) >= event.max_members) {
         throw new Error("Questo evento è già pieno.");
       }
@@ -275,6 +288,8 @@ export async function leaveJoinedEventAction(eventId: string) {
 
   if (eventError) throw eventError;
 
+  // Il creator non può semplicemente "uscire" dal proprio evento:
+  // deve eliminarlo o trasferirne prima la gestione.
   if (event.creator_id === user.id) {
     throw new Error(
       "Il creator non puo lasciare l'evento. Elimina l'evento oppure trasferisci la ownership.",
@@ -309,6 +324,7 @@ export async function deleteEventAction(eventId: string) {
 
   if (eventError) throw eventError;
 
+  // Solo il creator può eliminare definitivamente l'evento.
   if (event.creator_id !== user.id) {
     throw new Error("Solo il creator puo eliminare questo evento.");
   }
@@ -343,6 +359,8 @@ export async function updateEventAction(eventId: string, formData: FormData) {
 
   if (existingEventError) throw existingEventError;
   if (!existingEvent) throw new Error("Evento non trovato.");
+
+  // Anche l'update è riservato al creator dell'evento.
   if (existingEvent.creator_id !== user.id) {
     throw new Error("Non puoi modificare questo evento.");
   }

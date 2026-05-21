@@ -59,6 +59,14 @@ npm install -D @types/leaflet
 npm install -D @types/web-push
 ```
 
+## Per provare la web app
+
+La versione online dell’app è disponibile al seguente link:
+
+[Mevent](https://mevent-five.vercel.app)
+
+> Nota: se l’app viene eseguita in locale, l’autenticazione con Google non funziona, perché l’URL di redirect configurato su Supabase è attualmente impostato su `https://mevent-five.vercel.app`.
+
 ## Utenti di prova e credenziali
 
 Nella cartella `scripts` sono presenti gli script utilizzati per generare utenti di prova ed eventi associati utili per il testing dell’app.
@@ -208,9 +216,3 @@ L’app include funzionalità Progressive Web App, tra cui:
 - installazione su dispositivo;
 - service worker;
 - gestione notifiche push, se abilitate dall’utente.
-
-## Preso spunto da
-
-npx create-next-app -e with-supabase
-
-DEVO MODIFICARE LE CHIAVI PER CONNESSIONE IP SU SUPABASE

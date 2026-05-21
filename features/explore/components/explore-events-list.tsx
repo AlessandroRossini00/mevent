@@ -21,12 +21,17 @@ export default function ExploreEventsList() {
         const firstEntry = entries[0];
         if (!firstEntry?.isIntersecting) return;
 
+        // Quando il sentinel entra in viewport carichiamo automaticamente
+        // la pagina successiva, evitando chiamate multiple mentre è già in corso un fetch.
         if (hasMore && !isLoading && !isLoadingMore) {
           void loadMore();
         }
       },
       {
         root: null,
+
+        // Anticipiamo il caricamento prima che l'utente arrivi davvero in fondo,
+        // così lo scroll risulta più fluido e percepito come immediato.
         rootMargin: "300px 0px",
         threshold: 0,
       },
@@ -68,6 +73,7 @@ export default function ExploreEventsList() {
             ))}
           </Grid>
 
+          {/* Sentinel osservato dall'IntersectionObserver per attivare il load more */}
           <div ref={loadMoreRef} />
 
           {isLoadingMore ? (
@@ -79,6 +85,8 @@ export default function ExploreEventsList() {
           {hasMore ? (
             <Flex justify="center" pt="2">
               <Button onClick={() => void loadMore()} disabled={isLoadingMore}>
+                {/* Manteniamo anche il bottone come fallback esplicito,
+                    utile se l'observer non scatta subito o per dare più controllo all'utente */}
                 Carica altri eventi
               </Button>
             </Flex>

@@ -10,6 +10,7 @@ type SearchHit = {
 };
 
 function getUserAgent() {
+  // Nominatim richiede un User-Agent identificabile per l'uso corretto delle API.
   return (
     process.env.OSM_USER_AGENT ?? "mevent/0.1 (dev; contact: dev@localhost)"
   );
@@ -18,6 +19,9 @@ function getUserAgent() {
 function mapSearchResults(list: any[]): SearchHit[] {
   return list.map((item) => {
     const address = item.address ?? {};
+
+    // Proviamo a costruire un nome più compatto e leggibile del luogo:
+    // se non esiste item.name, usiamo campi address progressivamente più generici.
     const name =
       item.name ??
       address.attraction ??
@@ -45,6 +49,8 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const q = searchParams.get("q")?.trim();
 
+  // Blocchiamo query troppo corte per evitare richieste inutili
+  // e risultati poco significativi da Nominatim.
   if (!q || q.length < 3) {
     return NextResponse.json({ error: "Query troppo corta." }, { status: 400 });
   }
@@ -72,5 +78,8 @@ export async function GET(req: Request) {
   }
 
   const data = await res.json();
+
+  // Normalizziamo la risposta grezza di Nominatim
+  // nel formato usato dal picker location lato client.
   return NextResponse.json(mapSearchResults(data));
 }

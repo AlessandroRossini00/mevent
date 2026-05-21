@@ -1,4 +1,3 @@
-// Generato con AI
 "use server";
 
 import { redirect } from "next/navigation";
@@ -11,6 +10,7 @@ export async function createNewUserProfile(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Il completamento profilo è consentito solo a un utente autenticato.
   if (!user) redirect("/login");
 
   const username = String(formData.get("username") ?? "").trim() || null;
@@ -26,7 +26,8 @@ export async function createNewUserProfile(formData: FormData) {
     redirect("/new-user?message=Inserisci l'immagine.");
   }
 
-  // Controllo esistenza di username dupplici
+  // Se lo username è stato inserito, controlliamo in anticipo
+  // che non sia già occupato da un altro profilo.
   if (username) {
     const { data: existingUsername } = await supabase
       .from("profiles")
@@ -58,6 +59,8 @@ export async function createNewUserProfile(formData: FormData) {
       .from("avatar-images")
       .getPublicUrl(uploadedPath);
 
+    // L'immagine viene caricata prima dell'insert profilo,
+    // così possiamo salvare subito la public URL nel record finale.
     avatarUrl = data.publicUrl;
   }
 
@@ -73,10 +76,13 @@ export async function createNewUserProfile(formData: FormData) {
 
   if (error) {
     if (uploadedPath) {
+      // Se il profilo fallisce dopo l'upload dell'avatar,
+      // rimuoviamo il file appena caricato per evitare risorse orfane nello storage.
       await supabase.storage.from("avatar-images").remove([uploadedPath]);
     }
 
-    // Nel caso di username dupplici
+    // Gestiamo esplicitamente anche il caso in cui la duplicazione username
+    // venga intercettata solo dal vincolo database.
     if (
       error.code === "23505" &&
       error.message.includes("profiles_username_key")
@@ -87,5 +93,6 @@ export async function createNewUserProfile(formData: FormData) {
     redirect("/new-user?message=Errore durante la creazione del profilo.");
   }
 
+  // Una volta completato il profilo portiamo l'utente nell'app principale.
   redirect("/explore");
 }

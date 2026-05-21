@@ -1,6 +1,8 @@
 import webpush from "web-push";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+// Configuriamo web-push una sola volta con le chiavi VAPID usate
+// per firmare e inviare le notifiche push dal server.
 webpush.setVapidDetails(
   process.env.VAPID_SUBJECT!,
   process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
@@ -16,6 +18,7 @@ type PushPayload = {
 };
 
 export async function sendPushToUsers(userIds: string[], payload: PushPayload) {
+  // Se non ci sono destinatari evitiamo query e invii inutili.
   if (userIds.length === 0) return;
 
   const supabase = createAdminClient();
@@ -38,6 +41,8 @@ export async function sendPushToUsers(userIds: string[], payload: PushPayload) {
               auth: subscription.auth,
             },
           },
+          // Il payload viene serializzato perché il push service
+          // si aspetta un contenuto testuale da consegnare al client.
           JSON.stringify(payload),
         );
       } catch (pushError) {
@@ -50,6 +55,9 @@ export async function sendPushToUsers(userIds: string[], payload: PushPayload) {
             ? Number(pushError.statusCode)
             : null;
 
+        // 404 e 410 indicano in genere una subscription non più valida
+        // (device/browser disiscritto o endpoint scaduto), quindi la rimuoviamo
+        // dal database per evitare tentativi futuri inutili.
         if (statusCode === 404 || statusCode === 410) {
           await supabase
             .from("push_subscriptions")

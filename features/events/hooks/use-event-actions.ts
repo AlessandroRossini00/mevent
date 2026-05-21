@@ -27,6 +27,8 @@ export function useEventActions() {
       const result = await joinEventAction(eventId);
 
       if (result.type === "joined" && "event" in result && result.event) {
+        // Dopo il join aggiorniamo subito lo store locale,
+        // così la UI riflette immediatamente il nuovo stato dell'evento.
         upsertJoinedEvent(result.event as JoinedEvent);
         setCurrentEvent(result.event as JoinedEvent);
       }
@@ -47,6 +49,9 @@ export function useEventActions() {
 
     try {
       const uploaded = await uploadEventImage(eventId, file);
+
+      // L'upload dell'immagine avviene in due passaggi:
+      // prima salviamo il file nello storage, poi registriamo la URL nel database.
       return await saveEventImageRecord(eventId, uploaded.imageUrl);
     } catch (err) {
       const message =

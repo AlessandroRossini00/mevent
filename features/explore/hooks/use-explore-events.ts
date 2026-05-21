@@ -41,6 +41,8 @@ export function useExploreEvents() {
   const loadPage = useCallback(
     async (pageToLoad: number, append: boolean) => {
       try {
+        // Distinguiamo il primo caricamento dal "load more"
+        // per poter gestire spinner e UI in modo diverso.
         if (append) {
           setIsLoadingMore(true);
         } else {
@@ -69,6 +71,9 @@ export function useExploreEvents() {
 
           const map = new Map<string, ExploreEvent>();
 
+          // Quando appendiamo una nuova pagina deduplichiamo per id,
+          // così evitiamo duplicati anche se due fetch si sovrappongono
+          // o se una pagina restituisce eventi già presenti.
           for (const item of current) map.set(item.id, item);
           for (const item of result.events) map.set(item.id, item);
 
@@ -101,6 +106,9 @@ export function useExploreEvents() {
   );
 
   useEffect(() => {
+    // Quando cambiano i filtri applicati ripartiamo da zero:
+    // puliamo gli eventi correnti, resettiamo la paginazione
+    // e ricarichiamo la prima pagina del nuovo risultato.
     clearHiddenEvents();
     setEvents([]);
     setPage(0);
@@ -126,6 +134,8 @@ export function useExploreEvents() {
   };
 
   const visibleEvents = useMemo(
+    // hiddenEventIds permette di rimuovere subito dalla UI eventi già gestiti
+    // localmente, ad esempio dopo un join andato a buon fine.
     () => events.filter((event) => !hiddenEventIds.includes(event.id)),
     [events, hiddenEventIds],
   );

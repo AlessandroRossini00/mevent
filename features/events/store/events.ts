@@ -38,6 +38,9 @@ type EventsState = {
 };
 
 export const useEventsStore = create<EventsState>((set) => ({
+  // Manteniamo liste separate per eventi creati e joined,
+  // oltre all'evento aperto nel dettaglio, così la UI può aggiornare
+  // ogni contesto senza dover rifetchare tutto ogni volta.
   joinedEvents: [],
   createdEvents: [],
   currentEvent: null,
@@ -54,11 +57,17 @@ export const useEventsStore = create<EventsState>((set) => ({
 
   upsertJoinedEvent: (event) =>
     set((state) => ({
+      // Se l'evento esiste già nella lista lo aggiorniamo,
+      // altrimenti lo inseriamo in testa per riflettere subito
+      // il nuovo stato nella UI.
       joinedEvents: state.joinedEvents.some((item) => item.id === event.id)
         ? state.joinedEvents.map((item) =>
             item.id === event.id ? event : item,
           )
         : [event, ...state.joinedEvents],
+
+      // Se l'evento aperto nel dettaglio è lo stesso, lo riallineiamo
+      // con i dati appena aggiornati.
       currentEvent:
         state.currentEvent?.id === event.id ? event : state.currentEvent,
     })),
@@ -90,6 +99,8 @@ export const useEventsStore = create<EventsState>((set) => ({
 
   removeEvent: (eventId) =>
     set((state) => ({
+      // Questo helper rimuove l'evento da entrambi i contesti,
+      // utile quando non ci interessa distinguere se fosse creato o joined.
       joinedEvents: state.joinedEvents.filter((item) => item.id !== eventId),
       createdEvents: state.createdEvents.filter((item) => item.id !== eventId),
       currentEvent:
@@ -108,6 +119,8 @@ export const useEventsStore = create<EventsState>((set) => ({
   setError: (error) => set({ error }),
 
   clearEventsStore: () =>
+    // Reset completo usato quando vogliamo invalidare tutti i dati evento,
+    // ad esempio dopo logout o quando cambiamo completamente contesto utente.
     set({
       joinedEvents: [],
       createdEvents: [],

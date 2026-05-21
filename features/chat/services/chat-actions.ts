@@ -15,6 +15,7 @@ export async function sendEventMessage(
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Solo utenti autenticati possono inviare messaggi in chat.
   if (!user) redirect("/login");
 
   const trimmedBody = body.trim();
@@ -60,6 +61,8 @@ export async function sendEventMessage(
 
   if (error) throw error;
 
+  // Dopo l'insert rileggiamo il messaggio completo con i dati del sender,
+  // così il client riceve subito il payload già pronto per il rendering.
   const message = data as unknown as EventMessage;
 
   const senderName =
@@ -81,6 +84,8 @@ export async function sendEventMessage(
 
   if (membersError) throw membersError;
 
+  // Le notifiche push vengono inviate a tutti i partecipanti dell'evento
+  // tranne chi ha appena mandato il messaggio.
   const recipientIds = Array.from(
     new Set((members ?? []).map((member) => member.user_id).filter(Boolean)),
   );
@@ -118,6 +123,8 @@ export async function markEventChatAsRead(eventId: string) {
       last_read_at: new Date().toISOString(),
     },
     {
+      // Usiamo upsert perché per ogni coppia evento/utente
+      // vogliamo mantenere un solo record con l'ultimo timestamp di lettura.
       onConflict: "event_id,user_id",
     },
   );

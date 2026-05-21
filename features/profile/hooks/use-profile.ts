@@ -19,15 +19,23 @@ export function useProfile() {
       try {
         setLoadingProfile(true);
         setError(null);
+
         const data = await getMyProfileQuery();
+
+        // Se il componente è già stato smontato evitiamo di aggiornare lo store
+        // con il risultato di una richiesta ormai non più rilevante.
         if (!active) return;
+
         setProfile(data);
       } catch (err) {
         if (!active) return;
+
         setError(
           err instanceof Error ? err.message : "Errore caricamento profilo",
         );
       } finally {
+        // Manteniamo la stessa protezione anche nel finally,
+        // così non modifichiamo lo stato dopo l'unmount.
         if (active) setLoadingProfile(false);
       }
     };
@@ -35,6 +43,7 @@ export function useProfile() {
     void run();
 
     return () => {
+      // Segniamo l'effect come inattivo per ignorare eventuali risposte tardive.
       active = false;
     };
   }, [setProfile, setLoadingProfile, setError]);

@@ -16,6 +16,8 @@ export default function CreateEventForm() {
   const handleSubmit = (formData: FormData) => {
     setError(null);
 
+    // Blocchiamo subito la creazione se il device è offline,
+    // così evitiamo una richiesta destinata a fallire.
     if (!navigator.onLine) {
       setError("Sei offline. Riconnettiti per creare l'evento.");
       return;
@@ -24,9 +26,14 @@ export default function CreateEventForm() {
     startTransition(async () => {
       try {
         const image = formData.get("event_image") as File | null;
+
+        // L'immagine viene compressa lato client prima dell'upload
+        // per ridurre peso del file e tempo di caricamento.
         const optimizedImage =
           image && image.size > 0 ? await optimizeImage(image) : null;
 
+        // Creiamo prima l'evento per ottenere l'id necessario
+        // a salvare poi la cover nello storage con il path corretto.
         const result = await createEventAction(formData);
 
         if (optimizedImage) {
@@ -38,6 +45,8 @@ export default function CreateEventForm() {
         const message =
           err instanceof Error ? err.message : "Errore creazione evento";
 
+        // Gli errori di rete/offline vengono intercettati separatamente
+        // per mostrare un messaggio più utile del semplice errore tecnico.
         if (
           message.toLowerCase().includes("failed to fetch") ||
           !navigator.onLine

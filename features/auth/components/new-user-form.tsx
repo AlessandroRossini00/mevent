@@ -28,11 +28,16 @@ export default function NewUserForm({ message }: NewUserFormProps) {
     try {
       const avatar = formData.get("avatar") as File | null;
       const nextFormData = new FormData();
+
+      // Ricreiamo manualmente il FormData per poter sostituire il file avatar
+      // con la versione ottimizzata prima dell'invio alla server action.
       for (const [key, value] of formData.entries()) {
         nextFormData.append(key, value);
       }
 
       if (avatar && avatar.size > 0) {
+        // L'immagine viene compressa lato client per ridurre peso del file
+        // e tempi di upload durante l'onboarding.
         const optimizedAvatar = await optimizeImage(avatar);
         nextFormData.set("avatar", optimizedAvatar, optimizedAvatar.name);
       }
@@ -134,6 +139,8 @@ export default function NewUserForm({ message }: NewUserFormProps) {
           {message ? (
             <Box className="rounded-lg border border-red-200 bg-red-50 px-3 py-2">
               <Text size="2" color="red">
+                {/* message arriva dal redirect server-side,
+                    ad esempio dopo una validazione o un errore lato action */}
                 {message}
               </Text>
             </Box>
@@ -142,6 +149,8 @@ export default function NewUserForm({ message }: NewUserFormProps) {
           {localError ? (
             <Box className="rounded-lg border border-red-200 bg-red-50 px-3 py-2">
               <Text size="2" color="red">
+                {/* localError gestisce invece errori emersi direttamente
+                    nel submit client-side di questo form */}
                 {localError}
               </Text>
             </Box>

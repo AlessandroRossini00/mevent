@@ -50,6 +50,8 @@ export async function getJoinedEventsQuery(): Promise<JoinedEvent[]> {
 
   if (error) throw error;
 
+  // Per gli eventi joined partiamo da event_members perché il legame
+  // utente-evento vive lì; poi estraiamo il record evento annidato.
   return (data ?? [])
     .map((row) => row.events)
     .filter(Boolean) as unknown as JoinedEvent[];
@@ -73,6 +75,8 @@ export async function getCreatedEventsQuery(): Promise<CreatedEvent[]> {
 
   if (error) throw error;
 
+  // Qui leggiamo direttamente dalla tabella events perché il filtro
+  // dipende dalla ownership dell'evento, non dalla membership.
   return (data ?? []) as unknown as CreatedEvent[];
 }
 
@@ -89,5 +93,7 @@ export async function getEventByIdQuery(
 
   if (error) throw error;
 
+  // maybeSingle restituisce null se l'evento non esiste,
+  // evitando di trattare l'assenza come errore applicativo.
   return data as unknown as EventWithRelations | null;
 }

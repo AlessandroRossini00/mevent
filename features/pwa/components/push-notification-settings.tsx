@@ -22,6 +22,8 @@ export default function PushNotificationSettings() {
   );
 
   useEffect(() => {
+    // Alla prima apertura allineiamo lo stato locale con la subscription reale
+    // del browser, così lo switch parte già coerente con il dispositivo.
     if (!isInitialized) {
       void syncSubscription();
     }
@@ -38,6 +40,8 @@ export default function PushNotificationSettings() {
   const isEnabled = Boolean(subscription);
 
   const handleCheckedChange = async (checked: boolean) => {
+    // Lo switch controlla direttamente la subscription push:
+    // se attivo creiamo la registrazione, se spento la rimuoviamo.
     if (checked) {
       await subscribeToPush();
       return;
@@ -61,6 +65,8 @@ export default function PushNotificationSettings() {
 
           <Switch
             checked={isEnabled}
+            // Evitiamo interazioni mentre stiamo sincronizzando o aggiornando
+            // la subscription per non creare stati incoerenti nello switch.
             disabled={isPending || !isInitialized}
             onCheckedChange={handleCheckedChange}
           />

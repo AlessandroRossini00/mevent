@@ -7,6 +7,8 @@ import {
 } from "@/features/pwa/services/actions";
 
 function urlBase64ToUint8Array(base64String: string) {
+  // La chiave VAPID pubblica arriva come stringa base64-url-safe,
+  // ma PushManager.subscribe richiede un Uint8Array.
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
 
@@ -21,6 +23,8 @@ function urlBase64ToUint8Array(base64String: string) {
 }
 
 function serializeSubscription(subscription: PushSubscription) {
+  // La subscription del browser non è un plain object:
+  // la convertiamo in JSON per poterla inviare alla server action.
   return JSON.parse(JSON.stringify(subscription));
 }
 
@@ -53,6 +57,8 @@ export const usePushNotificationsStore = create<PushNotificationsStore>(
     syncSubscription: async () => {
       const { isSupported } = get();
 
+      // Se il browser non supporta le push inizializziamo comunque lo store,
+      // così la UI sa che non deve proporre questa funzionalità.
       if (!isSupported) {
         set({
           isInitialized: true,
@@ -75,6 +81,8 @@ export const usePushNotificationsStore = create<PushNotificationsStore>(
           isInitialized: true,
         });
 
+        // Se il browser ha già una subscription attiva, la riallineiamo
+        // anche sul backend per evitare mismatch tra device e database.
         if (existingSubscription) {
           await subscribeUser(serializeSubscription(existingSubscription));
         }
@@ -109,6 +117,8 @@ export const usePushNotificationsStore = create<PushNotificationsStore>(
 
         let subscription = await registration.pushManager.getSubscription();
 
+        // Riutilizziamo una subscription già esistente se presente;
+        // altrimenti ne creiamo una nuova con la chiave VAPID pubblica.
         if (!subscription) {
           subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
@@ -143,6 +153,8 @@ export const usePushNotificationsStore = create<PushNotificationsStore>(
       try {
         set({ isPending: true });
 
+        // Rimuoviamo prima la subscription dal browser e poi dal database,
+        // così il device non resta più registrato per notifiche future.
         await subscription.unsubscribe();
         await unsubscribeUser(subscription.endpoint);
 

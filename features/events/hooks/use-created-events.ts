@@ -25,7 +25,10 @@ export function useCreatedEvents() {
 
         const data = await getCreatedEventsQuery();
 
+        // Se il componente non è più attivo ignoriamo la risposta
+        // per evitare aggiornamenti tardivi dello store.
         if (!active) return;
+
         setCreatedEvents(data);
       } catch (err) {
         if (!active) return;
@@ -36,6 +39,8 @@ export function useCreatedEvents() {
             : "Errore caricamento eventi creati",
         );
       } finally {
+        // Anche lo stato di loading viene aggiornato solo se l'effect
+        // è ancora valido al termine della richiesta.
         if (active) setLoadingCreatedEvents(false);
       }
     };
@@ -43,6 +48,8 @@ export function useCreatedEvents() {
     void run();
 
     return () => {
+      // Segniamo l'effect come inattivo per ignorare eventuali risposte
+      // che arrivano dopo l'unmount del componente.
       active = false;
     };
   }, [setCreatedEvents, setLoadingCreatedEvents, setError]);

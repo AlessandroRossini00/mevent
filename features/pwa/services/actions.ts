@@ -19,6 +19,8 @@ export async function subscribeUser(subscription: SubscriptionInput) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Le subscription push sono sempre associate a un utente autenticato:
+  // se la sessione non esiste rimandiamo al login.
   if (!user) redirect("/login");
 
   const { error } = await supabase.from("push_subscriptions").upsert(
@@ -28,6 +30,8 @@ export async function subscribeUser(subscription: SubscriptionInput) {
       p256dh: subscription.keys.p256dh,
       auth: subscription.keys.auth,
     },
+    // L'endpoint identifica in modo univoco la subscription del device/browser:
+    // con upsert evitiamo duplicati e aggiorniamo eventuali chiavi cambiate.
     { onConflict: "endpoint" },
   );
 
@@ -43,6 +47,8 @@ export async function unsubscribeUser(endpoint: string) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Anche la rimozione è limitata all'utente autenticato, così non possiamo
+  // cancellare subscription appartenenti ad altri account.
   if (!user) redirect("/login");
 
   const { error } = await supabase
@@ -63,6 +69,8 @@ export async function sendNotification(message: string) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // La notifica di test viene inviata solo all'utente corrente,
+  // usando le subscription già salvate nel database.
   if (!user) redirect("/login");
 
   await sendPushToUsers([user.id], {

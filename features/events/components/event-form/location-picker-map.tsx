@@ -22,6 +22,8 @@ type LocationPickerMapProps = {
   onPick: (lat: number, lon: number) => void;
 };
 
+// In alcuni setup bundler Leaflet non riesce a risolvere correttamente
+// le icone di default del marker, quindi le configuriamo esplicitamente.
 delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })
   ._getIconUrl;
 
@@ -43,6 +45,9 @@ function Recenter({
 
   useEffect(() => {
     if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+
+    // Quando cambia la posizione "attiva" riallineiamo la vista della mappa
+    // per tenere il punto scelto sempre al centro.
     map.setView([latitude, longitude], 15, { animate: true });
   }, [latitude, longitude, map]);
 
@@ -56,6 +61,8 @@ function ClickPicker({
 }) {
   useMapEvents({
     click(event) {
+      // Il click sulla mappa non salva direttamente il dato finale:
+      // inoltra solo le coordinate al parent, che poi completa il reverse geocoding.
       onPick(event.latlng.lat, event.latlng.lng);
     },
   });
@@ -77,6 +84,8 @@ export default function LocationPickerMap({
     Number.isFinite(selected.latitude) &&
     Number.isFinite(selected.longitude);
 
+  // Se non abbiamo coordinate valide per il centro iniziale
+  // evitiamo di montare una mappa in stato incoerente.
   if (!hasValidCenter) {
     return null;
   }
@@ -97,6 +106,7 @@ export default function LocationPickerMap({
         <ClickPicker onPick={onPick} />
 
         {hasValidSelected ? (
+          // Mostriamo il marker solo quando esiste una posizione selezionata valida.
           <Marker position={[selected.latitude, selected.longitude]} />
         ) : null}
       </MapContainer>

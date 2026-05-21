@@ -42,6 +42,8 @@ type SearchExploreEventIdsRow = {
 };
 
 function toNullableNumber(value?: string) {
+  // I filtri prezzo arrivano come stringhe dalla UI:
+  // li convertiamo in number solo se il valore è valido.
   if (!value?.trim()) return null;
 
   const parsed = Number(value);
@@ -59,6 +61,8 @@ function shouldUseDistanceRpc(params: GetExploreEventsParams) {
     (params.minDistanceKm ?? 0) > 0 ||
     (params.maxDistanceKm ?? MAX_DISTANCE_CAP) < MAX_DISTANCE_CAP;
 
+  // La query distanza richiede coordinate utente e almeno un filtro distanza attivo.
+  // Se manca una delle due condizioni restiamo sulla query standard.
   return hasCoordinates && hasDistanceFilter;
 }
 
@@ -75,6 +79,8 @@ async function fetchEventsByIds(
 
   const supabase = createClient();
 
+  // Chiediamo alla RPC pageSize + 1 id per capire se esistono altre pagine
+  // senza dover eseguire una count separata.
   const hasMore = eventIds.length > pageSize;
   const pagedIds = eventIds.slice(0, pageSize);
 
@@ -87,6 +93,8 @@ async function fetchEventsByIds(
 
   const order = new Map(pagedIds.map((id, index) => [id, index]));
 
+  // La select con .in("id", ...) non garantisce l'ordine originale degli id:
+  // lo ricostruiamo manualmente per mantenere l'ordinamento deciso dalla RPC.
   const events = ((data ?? []) as ExploreEvent[]).sort(
     (a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0),
   );
@@ -158,6 +166,8 @@ export async function getExploreEventsQuery({
     const rows = (data ?? []) as SearchExploreEventIdsRow[];
     const eventIds = rows.map((row) => row.event_id);
 
+    // La RPC restituisce solo gli id ordinati/filtrati per distanza:
+    // qui recuperiamo i record completi degli eventi.
     return fetchEventsByIds(eventIds, pageSize);
   }
 
@@ -206,6 +216,7 @@ export async function getExploreEventsQuery({
       event.event_members?.some((member) => member.user_id === currentUserId) ??
       false;
 
+    // Nell'explore non mostriamo eventi a cui l'utente partecipa già.
     return !isMember;
   });
 

@@ -10,6 +10,8 @@ import {
 } from "@/features/profile/services/profile-storage";
 
 function toNullable(value: FormDataEntryValue | null) {
+  // I campi opzionali vuoti vengono convertiti in null
+  // per mantenere il dato più coerente nel database.
   const text = String(value ?? "").trim();
   return text || null;
 }
@@ -21,6 +23,7 @@ export async function updateProfileAction(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // L'aggiornamento del profilo è disponibile solo per utenti autenticati.
   if (!user) redirect("/login");
 
   const username = String(formData.get("username") ?? "").trim();
@@ -68,6 +71,8 @@ export async function updateProfileAction(formData: FormData) {
     throw new Error(`La bio non può superare ${PROFILE_LIMITS.bio} caratteri.`);
   }
 
+  // Leggiamo l'avatar attuale prima dell'update per capire se,
+  // dopo un nuovo upload, dovremo rimuovere il file precedente.
   const { data: currentProfile, error: currentProfileError } = await supabase
     .from("profiles")
     .select("avatar_url")
@@ -101,6 +106,8 @@ export async function updateProfileAction(formData: FormData) {
     .eq("id", user.id);
 
   if (error) {
+    // Se il database fallisce dopo aver caricato un nuovo avatar,
+    // rimuoviamo il file appena salvato per evitare immagini orfane nello storage.
     if (uploadedPath) {
       await removeAvatar(uploadedPath);
     }
@@ -117,6 +124,8 @@ export async function updateProfileAction(formData: FormData) {
 
   const oldAvatarPath = extractAvatarPath(currentProfile.avatar_url);
 
+  // Se l'update è andato a buon fine e abbiamo caricato un nuovo avatar,
+  // possiamo eliminare quello vecchio senza rischiare di perdere l'immagine attiva.
   if (uploadedPath && oldAvatarPath) {
     await removeAvatar(oldAvatarPath);
   }

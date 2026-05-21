@@ -21,17 +21,25 @@ export function useJoinedEvents() {
       try {
         setLoadingJoinedEvents(true);
         setError(null);
+
         const data = await getJoinedEventsQuery();
+
+        // Se il componente non è più attivo ignoriamo la risposta
+        // per evitare aggiornamenti tardivi dello store.
         if (!active) return;
+
         setJoinedEvents(data);
       } catch (err) {
         if (!active) return;
+
         setError(
           err instanceof Error
             ? err.message
             : "Errore caricamento joined events",
         );
       } finally {
+        // Aggiorniamo il loading solo se questo effect è ancora valido
+        // al termine della richiesta asincrona.
         if (active) setLoadingJoinedEvents(false);
       }
     };
@@ -39,6 +47,8 @@ export function useJoinedEvents() {
     void run();
 
     return () => {
+      // Segniamo l'effect come inattivo per ignorare eventuali risposte
+      // arrivate dopo l'unmount del componente.
       active = false;
     };
   }, [setJoinedEvents, setLoadingJoinedEvents, setError]);
